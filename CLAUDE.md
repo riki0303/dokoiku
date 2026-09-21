@@ -24,6 +24,11 @@
 ### 主要な規約
 - **認可**: `app/policies/` に Pundit ポリシーを配置。全コントローラーで `authorize` と `policy_scope` を呼ぶ。`Pundit::NotAuthorizedError` は `ApplicationController` でレスキューする
 - **ビュー**: Haml テンプレート (`.html.haml`)。フォームは Simple Form + Bootstrap を使用
-- **フロントエンド**: Hotwire (Turbo + Stimulus)、Bootstrap 5、esbuild + Sass
+- **フロントエンド**: Hotwire (Turbo + Stimulus)、Bootstrap 5
+  - JavaScript は importmap-rails（`config/importmap.rb`）
+  - CSS は cssbundling-rails + Sass（`yarn build:css`、出力は `app/assets/builds/`）
+  - アセット配信は Propshaft
 
-> **注意**: 上記は rain_diary と同じ構成を想定した記載。Pundit / RSpec / Haml / Simple Form / rails_best_practices は未導入のため、実際に導入したタイミングでこの節と `.claude/agents/` のコマンドが実態と一致しているか確認すること。
+### 導入状況
+- Pundit / RSpec (+ factory_bot_rails) / Haml (haml-rails) / Simple Form (Bootstrap 設定込み) / rails_best_practices は導入・初期化済み
+- rails_best_practices は `bundle exec rails_best_practices .` で実行する（binstub は置かない）
