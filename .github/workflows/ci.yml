@@ -92,7 +92,7 @@ jobs:
       - name: Check for Rails best practices
         run: bundle exec rails_best_practices .
 
-  test:
+  rspec:
     runs-on: ubuntu-latest
 
     services:
