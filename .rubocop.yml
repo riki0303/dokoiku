@@ -1,8 +1,24 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+# RSpec specific cops
+plugins:
+  - rubocop-rspec
+
 # Overwrite or add rules to create your own house style
 #
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
 # Layout/SpaceInsideArrayLiteralBrackets:
 #   Enabled: false
+
+# Explicitly enable new rubocop-rspec cops so `bin/rubocop` doesn't warn about unconfigured cops
+RSpec/DiscardedMatcher:
+  Enabled: true
+RSpec/IncludeExamples:
+  Enabled: true
+RSpec/LeakyLocalVariable:
+  Enabled: true
+RSpec/MatchWithSimpleRegex:
+  Enabled: true
+RSpec/Output:
+  Enabled: true
