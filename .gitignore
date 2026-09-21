@@ -41,3 +41,6 @@
 
 # Ignore vendored gems installed by bundler.
 /vendor/bundle
+
+# Ignore JetBrains IDE settings.
+/.idea/
