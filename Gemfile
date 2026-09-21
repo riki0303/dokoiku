@@ -18,6 +18,10 @@ gem "stimulus-rails"
 gem "cssbundling-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+# json 3.x removed the positional options Hash from JSON.parse, which breaks
+# ActiveSupport::JSON.decode in Rails 8.1.3.1 (rails/rails#58685, #16).
+# Remove this pin once a Rails release includes the fix.
+gem "json", "< 3"
 
 # Minimal authorization through OO design and pure Ruby classes [https://github.com/varvet/pundit]
 gem "pundit"
