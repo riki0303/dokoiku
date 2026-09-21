@@ -19,6 +19,13 @@ gem "cssbundling-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
+# Minimal authorization through OO design and pure Ruby classes [https://github.com/varvet/pundit]
+gem "pundit"
+# Rails forms made easy [https://github.com/heartcombo/simple_form]
+gem "simple_form"
+# Haml generators and template handler for Rails [https://github.com/haml/haml-rails]
+gem "haml-rails"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -54,9 +61,21 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Testing framework for Rails [https://github.com/rspec/rspec-rails]
+  gem "rspec-rails"
+
+  # Fixtures replacement for building test data [https://github.com/thoughtbot/factory_bot_rails]
+  gem "factory_bot_rails"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # RSpec specific analysis for RuboCop [https://github.com/rubocop/rubocop-rspec]
+  gem "rubocop-rspec", require: false
+
+  # Code metric tool for Rails projects [https://github.com/flyerhzm/rails_best_practices]
+  gem "rails_best_practices", require: false
 end
