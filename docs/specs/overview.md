@@ -190,7 +190,7 @@ UI に「30分以内」などの時間表記を出さないこと。計算して
 
 ## 10. 技術方針
 
-- Ruby on Rails。フロントエンドも Rails で作る（ERB + Hotwire）
+- Ruby on Rails。フロントエンドも Rails で作る（Haml + Hotwire）
 - DB は PostgreSQL
 - 外部 API への依存はゼロ
 - 環境変数に入れるべき秘密情報は現時点で存在しない
