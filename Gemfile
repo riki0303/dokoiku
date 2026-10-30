@@ -29,6 +29,12 @@ gem "pundit"
 gem "simple_form"
 # Haml generators and template handler for Rails [https://github.com/haml/haml-rails]
 gem "haml-rails"
+# Flexible authentication solution for Rails [https://github.com/heartcombo/devise]
+gem "devise"
+# Translations for Devise [https://github.com/tigrish/devise-i18n]
+gem "devise-i18n"
+# Locale data for Rails (Japanese translations) [https://github.com/svenfuchs/rails-i18n]
+gem "rails-i18n"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
