@@ -16,7 +16,7 @@ class User < ApplicationRecord
 
   private
 
-  # サインアップ時に1人グループを組み立てる。has_many の autosave により user の保存と同じトランザクションで保存される
+  # サインアップ時に1人グループを組み立てる。has_many は新規レコードを親の保存時に自動保存するため、user と同じトランザクションで保存される
   def build_personal_group
     return if memberships.any?
 
