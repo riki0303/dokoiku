@@ -18,10 +18,6 @@ gem "stimulus-rails"
 gem "cssbundling-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
-# json 3.x removed the positional options Hash from JSON.parse, which breaks
-# ActiveSupport::JSON.decode in Rails 8.1.3.1 (rails/rails#58685, #16).
-# Remove this pin once a Rails release includes the fix.
-gem "json", "< 3"
 
 # Minimal authorization through OO design and pure Ruby classes [https://github.com/varvet/pundit]
 gem "pundit"
@@ -57,7 +53,9 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.2"
+# Ruby bindings for libvips, used by image_processing for Active Storage variants [https://github.com/libvips/ruby-vips]
+gem "ruby-vips", "~> 2.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
