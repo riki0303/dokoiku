@@ -34,6 +34,8 @@ begin
 rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
+RSpec::Matchers.define_negated_matcher :not_change, :change
+
 RSpec.configure do |config|
   # Allow calling `create` / `build` directly instead of `FactoryBot.create` / `FactoryBot.build`
   config.include FactoryBot::Syntax::Methods
