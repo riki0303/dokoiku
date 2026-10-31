@@ -1,7 +1,7 @@
 require "rails_helper"
 
-RSpec.describe "Users registrations routing", type: :routing do
-  it "routes the registration actions", :aggregate_failures do
+RSpec.describe "ユーザー登録のルーティング", type: :routing do
+  it "登録関連のアクションにルーティングすること", :aggregate_failures do
     expect(get: "/users/sign_up").to route_to("devise/registrations#new")
     expect(post: "/users").to route_to("devise/registrations#create")
     expect(get: "/users/edit").to route_to("devise/registrations#edit")
@@ -9,11 +9,11 @@ RSpec.describe "Users registrations routing", type: :routing do
     expect(patch: "/users").to route_to("devise/registrations#update")
   end
 
-  it "does not route account deletion" do
+  it "アカウント削除にルーティングしないこと" do
     expect(delete: "/users").not_to be_routable
   end
 
-  it "does not route registration cancel" do
+  it "登録キャンセルにルーティングしないこと" do
     expect(get: "/users/cancel").not_to be_routable
   end
 end

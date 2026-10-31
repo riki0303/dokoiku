@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Users::Registrations", type: :request do
   describe "GET /users/sign_up" do
-    it "renders the sign up form" do
+    it "新規登録フォームを表示すること" do
       get new_user_registration_path
       expect(response).to have_http_status(:ok)
     end
@@ -20,43 +20,43 @@ RSpec.describe "Users::Registrations", type: :request do
       }
     end
 
-    context "with valid params" do
-      it "creates a user" do
+    context "パラメータが正しい場合" do
+      it "ユーザーを作成すること" do
         expect { post user_registration_path, params: params }.to change(User, :count).by(1)
       end
 
-      it "saves the name and redirects to root", :aggregate_failures do
+      it "名前を保存してトップページにリダイレクトすること", :aggregate_failures do
         post user_registration_path, params: params
         expect(User.last.name).to eq("山田太郎")
         expect(response).to redirect_to(root_path)
       end
     end
 
-    context "with a password shorter than 8 characters" do
+    context "パスワードが8文字未満の場合" do
       before do
         params[:user][:password] = "a" * 7
         params[:user][:password_confirmation] = "a" * 7
       end
 
-      it "does not create a user" do
+      it "ユーザーを作成しないこと" do
         expect { post user_registration_path, params: params }.not_to change(User, :count)
       end
 
-      it "re-renders the form with an error", :aggregate_failures do
+      it "エラーを表示してフォームを再表示すること", :aggregate_failures do
         post user_registration_path, params: params
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("パスワードは8文字以上で入力してください")
       end
     end
 
-    context "with a blank name" do
+    context "名前が空の場合" do
       before { params[:user][:name] = "" }
 
-      it "does not create a user" do
+      it "ユーザーを作成しないこと" do
         expect { post user_registration_path, params: params }.not_to change(User, :count)
       end
 
-      it "re-renders the form with an error", :aggregate_failures do
+      it "エラーを表示してフォームを再表示すること", :aggregate_failures do
         post user_registration_path, params: params
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("名前を入力してください")
@@ -65,8 +65,8 @@ RSpec.describe "Users::Registrations", type: :request do
   end
 
   describe "GET /users/edit" do
-    context "when not signed in" do
-      it "redirects to the sign in page" do
+    context "未ログインの場合" do
+      it "ログインページにリダイレクトすること" do
         get edit_user_registration_path
         expect(response).to redirect_to(new_user_session_path)
       end
@@ -78,13 +78,13 @@ RSpec.describe "Users::Registrations", type: :request do
 
     before { sign_in user }
 
-    it "updates the name with the current password", :aggregate_failures do
+    it "現在のパスワードを入力すると名前を更新すること", :aggregate_failures do
       put user_registration_path, params: { user: { name: "新名前", current_password: "password123" } }
       expect(user.reload.name).to eq("新名前")
       expect(response).to redirect_to(root_path)
     end
 
-    it "does not update without the current password", :aggregate_failures do
+    it "現在のパスワードがないと更新しないこと", :aggregate_failures do
       put user_registration_path, params: { user: { name: "新名前" } }
       expect(user.reload.name).to eq("旧名前")
       expect(response).to have_http_status(:unprocessable_content)

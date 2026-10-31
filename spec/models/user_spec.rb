@@ -1,26 +1,26 @@
 require "rails_helper"
 
 RSpec.describe User, type: :model do
-  describe "validations" do
+  describe "バリデーション" do
     subject(:user) { build(:user) }
 
-    it "is valid with valid attributes" do
+    it "正しい属性なら有効であること" do
       expect(user).to be_valid
     end
 
     describe "name" do
-      it "is required", :aggregate_failures do
+      it "必須であること", :aggregate_failures do
         user.name = ""
         expect(user).not_to be_valid
         expect(user.errors[:name]).to include("を入力してください")
       end
 
-      it "is valid with 50 characters" do
+      it "50文字なら有効であること" do
         user.name = "あ" * 50
         expect(user).to be_valid
       end
 
-      it "is invalid with 51 characters", :aggregate_failures do
+      it "51文字なら無効であること", :aggregate_failures do
         user.name = "あ" * 51
         expect(user).not_to be_valid
         expect(user.errors[:name]).to include("は50文字以内で入力してください")
@@ -28,13 +28,13 @@ RSpec.describe User, type: :model do
     end
 
     describe "email" do
-      it "is required", :aggregate_failures do
+      it "必須であること", :aggregate_failures do
         user.email = ""
         expect(user).not_to be_valid
         expect(user.errors[:email]).to include("を入力してください")
       end
 
-      it "must be unique (case-insensitive)", :aggregate_failures do
+      it "大文字・小文字を区別せず一意であること", :aggregate_failures do
         create(:user, email: "taken@example.com")
         user.email = "TAKEN@example.com"
         expect(user).not_to be_valid
