@@ -71,6 +71,16 @@ RSpec.describe "Users::Registrations", type: :request do
         expect(response).to redirect_to(new_user_session_path)
       end
     end
+
+    context "ログイン済みの場合" do
+      before { sign_in create(:user) }
+
+      it "アカウント削除ボタン付きの編集フォームを表示すること", :aggregate_failures do
+        get edit_user_registration_path
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("アカウント削除")
+      end
+    end
   end
 
   describe "PUT /users" do
@@ -88,6 +98,34 @@ RSpec.describe "Users::Registrations", type: :request do
       put user_registration_path, params: { user: { name: "新名前" } }
       expect(user.reload.name).to eq("旧名前")
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe "DELETE /users" do
+    let!(:user) { create(:user) }
+
+    context "ログイン済みの場合" do
+      before { sign_in user }
+
+      it "ユーザーを削除すること" do
+        expect { delete user_registration_path }.to change(User, :count).by(-1)
+      end
+
+      it "ログインページにリダイレクトすること" do
+        delete user_registration_path
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+
+    context "未ログインの場合" do
+      it "ユーザーを削除しないこと" do
+        expect { delete user_registration_path }.not_to change(User, :count)
+      end
+
+      it "ログインページにリダイレクトすること" do
+        delete user_registration_path
+        expect(response).to redirect_to(new_user_session_path)
+      end
     end
   end
 end

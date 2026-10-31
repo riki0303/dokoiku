@@ -9,11 +9,11 @@ RSpec.describe "ユーザー登録のルーティング", type: :routing do
     expect(patch: "/users").to route_to("devise/registrations#update")
   end
 
-  it "アカウント削除にルーティングしないこと" do
-    expect(delete: "/users").not_to be_routable
+  it "アカウント削除にルーティングすること" do
+    expect(delete: "/users").to route_to("devise/registrations#destroy")
   end
 
-  it "登録キャンセルにルーティングしないこと" do
-    expect(get: "/users/cancel").not_to be_routable
+  it "登録キャンセルにルーティングすること" do
+    expect(get: "/users/cancel").to route_to("devise/registrations#cancel")
   end
 end
