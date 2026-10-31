@@ -1,0 +1,11 @@
+- content_for :title, t(".sign_in")
+.row.justify-content-center
+  .col-md-6.col-lg-5
+    %h1.h3.mb-4= t(".sign_in")
+    = simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
+      = f.input :email, required: false, autofocus: true, input_html: { autocomplete: "email" }
+      = f.input :password, required: false, input_html: { autocomplete: "current-password" }
+      - if devise_mapping.rememberable?
+        = f.input :remember_me, as: :boolean
+      = f.button :submit, t(".sign_in"), class: "btn-primary w-100"
+    = render "devise/shared/links"

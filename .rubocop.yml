@@ -22,3 +22,7 @@ RSpec/MatchWithSimpleRegex:
   Enabled: true
 RSpec/Output:
   Enabled: true
+
+# context の説明文は日本語で書くため、英語の接頭辞（when/with/without）を求めるこのルールは使わない
+RSpec/ContextWording:
+  Enabled: false

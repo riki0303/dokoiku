@@ -1,5 +1,5 @@
 !!!
-%html
+%html{lang: I18n.locale}
   %head
     %title= content_for(:title) || "Dokoiku"
     %meta{name: "viewport", content: "width=device-width,initial-scale=1"}
@@ -23,4 +23,7 @@
     = javascript_importmap_tags
 
   %body
-    = yield
+    = render "layouts/navbar"
+    %main.container
+      = render "layouts/flash"
+      = yield
