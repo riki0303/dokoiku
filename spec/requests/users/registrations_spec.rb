@@ -25,6 +25,13 @@ RSpec.describe "Users::Registrations", type: :request do
         expect { post user_registration_path, params: params }.to change(User, :count).by(1)
       end
 
+      it "1人グループと membership を1件ずつ作成すること", :aggregate_failures do
+        expect { post user_registration_path, params: params }
+          .to change(Group, :count).by(1)
+          .and change(Membership, :count).by(1)
+        expect(User.last.group).to be_present
+      end
+
       it "名前を保存してトップページにリダイレクトすること", :aggregate_failures do
         post user_registration_path, params: params
         expect(User.last.name).to eq("山田太郎")
@@ -54,6 +61,10 @@ RSpec.describe "Users::Registrations", type: :request do
 
       it "ユーザーを作成しないこと" do
         expect { post user_registration_path, params: params }.not_to change(User, :count)
+      end
+
+      it "グループを作成しないこと" do
+        expect { post user_registration_path, params: params }.not_to change(Group, :count)
       end
 
       it "エラーを表示してフォームを再表示すること", :aggregate_failures do
@@ -109,6 +120,12 @@ RSpec.describe "Users::Registrations", type: :request do
 
       it "ユーザーを削除すること" do
         expect { delete user_registration_path }.to change(User, :count).by(-1)
+      end
+
+      it "membership を削除し、グループは残すこと" do
+        expect { delete user_registration_path }
+          .to change(Membership, :count).by(-1)
+          .and not_change(Group, :count)
       end
 
       it "ログインページにリダイレクトすること" do

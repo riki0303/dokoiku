@@ -13,7 +13,14 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  helper_method :current_group
+
   protected
+
+  # Group of the signed-in user; will scope places / areas (not referenced yet)
+  def current_group # rails_best_practices:disable RemoveUnusedMethodsInControllersCheck
+    @current_group ||= current_user&.group
+  end
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [ :name ])
