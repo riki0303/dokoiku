@@ -9,6 +9,15 @@ RSpec.describe "Users::Sessions", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("パスワードを忘れましたか？")
     end
+
+    # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する
+    it "novalidate を付けず、メールアドレスとパスワードに required を付けること", :aggregate_failures do
+      get new_user_session_path
+      form = response.parsed_body.at_css("form#new_user")
+      expect(form["novalidate"]).to be_nil
+      expect(form.at_css("input[name='user[email]']")["required"]).to eq("required")
+      expect(form.at_css("input[name='user[password]']")["required"]).to eq("required")
+    end
   end
 
   describe "POST /users/sign_in" do
