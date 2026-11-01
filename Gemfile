@@ -77,6 +77,14 @@ group :development, :test do
   gem "factory_bot_rails"
 end
 
+group :test do
+  # Acceptance test framework for web applications [https://github.com/teamcapybara/capybara]
+  gem "capybara"
+
+  # Browser automation driver used by Capybara for system specs [https://github.com/SeleniumHQ/selenium/tree/trunk/rb]
+  gem "selenium-webdriver"
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"

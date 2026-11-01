@@ -146,3 +146,12 @@ jobs:
 
       - name: Run tests
         run: bundle exec rspec
+
+      - name: Upload screenshots from failed system specs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: tmp/screenshots
+          if-no-files-found: ignore
+          retention-days: 7
