@@ -30,6 +30,30 @@ RSpec.describe "Places", type: :request do
         get new_place_path
         expect(response.body).not_to match(/\d+\s*(分|時間|km|キロ)/)
       end
+
+      # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する
+      it "ブラウザの入力チェックを無効にする novalidate を付けないこと" do
+        get new_place_path
+        expect(response.parsed_body.at_css("form#new_place")["novalidate"]).to be_nil
+      end
+
+      it "場所の名前・一言に required と文字数上限を付けること", :aggregate_failures do
+        get new_place_path
+        form = response.parsed_body
+        expect(form.at_css("input[name='place[name]']").to_h).to include("required" => "required", "maxlength" => "100")
+        expect(form.at_css("input[name='place[note]']").to_h).to include("required" => "required", "maxlength" => "200")
+      end
+
+      it "距離感のラジオに required を付けること" do
+        get new_place_path
+        radios = response.parsed_body.css("input[type=radio][name='place[distance]']")
+        expect(radios.map { |radio| radio["required"] }).to eq(%w[required required required])
+      end
+
+      it "距離感のラジオをどれも選択済みにしないこと" do
+        get new_place_path
+        expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
+      end
     end
   end
 

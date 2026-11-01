@@ -3,7 +3,7 @@
   .col-md-6.col-lg-5
     %h1.h3.mb-4 場所を登録する
     = simple_form_for(@place) do |f|
-      = render "devise/shared/error_messages", resource: @place
+      = render "shared/error_messages", model: @place
       = f.input :name, autofocus: true, input_html: { maxlength: 100 }
       = f.input :note, input_html: { maxlength: 200 }
       = f.input :distance,

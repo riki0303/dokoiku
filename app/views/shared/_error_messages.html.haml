@@ -1,0 +1,7 @@
+- if model.errors.any?
+  #error_explanation.alert.alert-danger{data: {turbo_temporary: true}}
+    %p.fw-bold.mb-2
+      = t("errors.messages.not_saved", count: model.errors.count, resource: model.model_name.human)
+    %ul.mb-0
+      - model.errors.full_messages.each do |message|
+        %li= message
