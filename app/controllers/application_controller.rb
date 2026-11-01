@@ -17,8 +17,8 @@ class ApplicationController < ActionController::Base
 
   protected
 
-  # Group of the signed-in user; will scope places / areas (not referenced yet)
-  def current_group # rails_best_practices:disable RemoveUnusedMethodsInControllersCheck
+  # Group of the signed-in user; scopes places
+  def current_group
     @current_group ||= current_user&.group
   end
 

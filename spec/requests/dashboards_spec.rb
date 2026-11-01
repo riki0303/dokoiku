@@ -19,6 +19,11 @@ RSpec.describe "Dashboards", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("ようこそ、山田太郎さん")
       end
+
+      it "場所の登録フォームへのリンクを表示すること" do
+        get root_path
+        expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+      end
     end
   end
 end

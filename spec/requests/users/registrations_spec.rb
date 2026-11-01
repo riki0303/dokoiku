@@ -6,6 +6,15 @@ RSpec.describe "Users::Registrations", type: :request do
       get new_user_registration_path
       expect(response).to have_http_status(:ok)
     end
+
+    # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する
+    it "novalidate を付けず、名前とメールアドレスに required を付けること", :aggregate_failures do
+      get new_user_registration_path
+      form = response.parsed_body.at_css("form#new_user")
+      expect(form["novalidate"]).to be_nil
+      expect(form.at_css("input[name='user[name]']")["required"]).to eq("required")
+      expect(form.at_css("input[name='user[email]']")["required"]).to eq("required")
+    end
   end
 
   describe "POST /users" do
