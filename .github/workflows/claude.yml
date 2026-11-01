@@ -49,9 +49,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -63,20 +60,18 @@ jobs:
           node-version-file: .node-version
           cache: yarn
 
-      - name: Install JavaScript dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build CSS
-        run: yarn build:css
-
-      - name: Prepare database
-        run: bin/rails db:test:prepare
-
+      # 重い準備（libvips・yarn・CSS ビルド・DB）はここでは行わず、
+      # コードを変更したときだけ Claude が .github/scripts/prepare_test_env.sh で行う。
+      # 質問だけなら準備を飛ばして早く返事できるようにするため
       # developer エージェントと同じ 4 つのチェックを通してから push させる
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
+        env:
+          # 準備スクリプトや rspec が Bash ツールの既定タイムアウト（2 分）を超えても止まらないようにする
+          BASH_DEFAULT_TIMEOUT_MS: 600000
+          BASH_MAX_TIMEOUT_MS: 600000
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --allowedTools "Bash(bundle exec rspec:*),Bash(bin/rubocop:*),Bash(bin/brakeman:*),Bash(bundle exec rails_best_practices:*),Bash(bin/rails db:test:prepare),Bash(yarn build:css)"
-            --append-system-prompt "コードを変更した場合は、コミット・push する前に bundle exec rspec / bin/rubocop / bin/brakeman --no-pager / bundle exec rails_best_practices . をすべて実行し、すべてパスしてから push すること。パスしない場合は修正を試み、それでも解決できなければ push せずに状況を PR コメントで報告すること。"
+            --allowedTools "Bash(.github/scripts/prepare_test_env.sh),Bash(bundle exec rspec:*),Bash(bin/rubocop:*),Bash(bin/brakeman:*),Bash(bundle exec rails_best_practices:*),Bash(bin/rails db:test:prepare),Bash(yarn build:css)"
+            --append-system-prompt "質問への回答だけでコードを変更しない場合は、テスト環境の準備やチェックは不要。コードを変更した場合は、まず .github/scripts/prepare_test_env.sh を 1 回実行してテスト環境を準備し、コミット・push する前に bundle exec rspec / bin/rubocop / bin/brakeman --no-pager / bundle exec rails_best_practices . をすべて実行し、すべてパスしてから push すること。パスしない場合は修正を試み、それでも解決できなければ push せずに状況を PR コメントで報告すること。"
