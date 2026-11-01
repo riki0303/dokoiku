@@ -1,0 +1,82 @@
+name: Claude Code
+
+# PR のコメント・レビューで @claude とメンションすると Claude が対応する
+on:
+  issue_comment:
+    types: [ created ]
+  pull_request_review_comment:
+    types: [ created ]
+  pull_request_review:
+    types: [ submitted ]
+
+jobs:
+  claude:
+    # PR 上のコメントで、@claude を含むものだけ動かす
+    if: |
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    # rspec 用の DB（ci.yml の rspec ジョブと同じ構成）
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build CSS
+        run: yarn build:css
+
+      - name: Prepare database
+        run: bin/rails db:test:prepare
+
+      # developer エージェントと同じ 4 つのチェックを通してから push させる
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --allowedTools "Bash(bundle exec rspec:*),Bash(bin/rubocop:*),Bash(bin/brakeman:*),Bash(bundle exec rails_best_practices:*),Bash(bin/rails db:test:prepare),Bash(yarn build:css)"
+            --append-system-prompt "コードを変更した場合は、コミット・push する前に bundle exec rspec / bin/rubocop / bin/brakeman --no-pager / bundle exec rails_best_practices . をすべて実行し、すべてパスしてから push すること。パスしない場合は修正を試み、それでも解決できなければ push せずに状況を PR コメントで報告すること。"
