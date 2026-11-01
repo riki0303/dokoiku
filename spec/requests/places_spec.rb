@@ -4,6 +4,156 @@ RSpec.describe "Places", type: :request do
   let(:user) { create(:user) }
   let(:valid_params) { { place: { name: "江ノ島", note: "夕日を見に行きたい", distance: "day_trip" } } }
 
+  describe "GET /places" do
+    context "未ログインの場合" do
+      it "ログインページにリダイレクトすること" do
+        get places_path
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+
+    context "ログイン済みで場所がある場合" do
+      # 一覧に表示された場所の名前を上から順に返す
+      let(:listed_names) { response.parsed_body.css(".list-group-item .fw-bold").map(&:text) }
+
+      before do
+        create(:place, group: user.group, name: "近所の公園", note: "散歩したい", distance: :near, created_at: 3.days.ago)
+        create(:place, group: user.group, name: "江ノ島", note: "夕日を見に行きたい", distance: :day_trip, created_at: 2.days.ago)
+        create(:place, group: user.group, name: "駅前のカフェ", note: "パンが気になる", distance: :near, created_at: 1.day.ago)
+        create(:place, group: create(:user).group, name: "他人の場所", distance: :near)
+        sign_in user
+      end
+
+      it "自分のグループの場所だけを新しい順に表示すること", :aggregate_failures do
+        get places_path
+        expect(response).to have_http_status(:ok)
+        expect(listed_names).to eq(%w[駅前のカフェ 江ノ島 近所の公園])
+        expect(response.body).not_to include("他人の場所")
+      end
+
+      it "場所の名前・一言・距離感を表示すること" do
+        get places_path
+        expect(response.body).to include("江ノ島", "夕日を見に行きたい", "日帰り")
+      end
+
+      it "q[distance_eq]=near で近場の場所だけを表示すること" do
+        get places_path, params: { q: { distance_eq: "near" } }
+        expect(listed_names).to eq(%w[駅前のカフェ 近所の公園])
+      end
+
+      it "q がなければ全件を表示すること" do
+        get places_path
+        expect(listed_names.size).to eq(3)
+      end
+
+      it "q を何にしても他のグループの場所を表示しないこと", :aggregate_failures do
+        [ {}, { distance_eq: "near" }, { group_id_eq: Place.find_by(name: "他人の場所").group_id }, { name_cont: "他人" } ].each do |q|
+          get places_path, params: { q: q }
+          expect(response.body).not_to include("他人の場所")
+        end
+      end
+
+      it "許可していない条件を送っても無視すること" do
+        get places_path, params: { q: { name_cont: "江ノ島" } }
+        expect(listed_names).to eq(%w[駅前のカフェ 江ノ島 近所の公園])
+      end
+
+      it "並び替えを送っても無視し、新しい順のままにすること" do
+        get places_path, params: { q: { s: "created_at asc" } }
+        expect(listed_names).to eq(%w[駅前のカフェ 江ノ島 近所の公園])
+      end
+
+      it "すべて・近場・日帰り・遠出の絞り込みボタンを表示すること" do
+        get places_path
+        buttons = response.parsed_body.css("a.btn[href='#{places_path}'], a.btn[href^='#{places_path}?']")
+        expect(buttons.map(&:text)).to eq(%w[すべて 近場 日帰り 遠出])
+      end
+
+      it "各絞り込みボタンのリンク先に距離感の条件を付けること" do
+        get places_path
+        links = response.parsed_body.css("nav a.btn").to_h { |link| [ link.text, link["href"] ] }
+        expected = { "すべて" => places_path }
+        expected.merge!(%w[近場 日帰り 遠出].zip(%w[near day_trip far]).to_h { |label, key| [ label, places_path(q: { distance_eq: key }) ] })
+        expect(links).to eq(expected)
+      end
+
+      it "見出し横に登録画面へのリンクを表示すること" do
+        get places_path
+        expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+      end
+
+      it "選択中のボタンだけを塗りつぶし、aria-current を付けること", :aggregate_failures do
+        get places_path, params: { q: { distance_eq: "near" } }
+        current = response.parsed_body.css("a[aria-current='page']")
+        expect(current.map(&:text)).to eq([ "近場" ])
+        expect(response.parsed_body.css("a.btn-primary[href^='#{places_path}?']").map(&:text)).to eq([ "近場" ])
+      end
+
+      it "q がなければ「すべて」ボタンに aria-current を付けること" do
+        get places_path
+        expect(response.parsed_body.css("a[aria-current='page']").map(&:text)).to eq([ "すべて" ])
+      end
+
+      it "時間や距離の数値表記を表示しないこと" do
+        get places_path
+        expect(response.body).not_to match(/\d+\s*(分|時間|km|キロ)/)
+      end
+    end
+
+    context "ログイン済みで絞り込んだ結果だけ0件の場合" do
+      before do
+        create(:place, group: user.group, distance: :near)
+        sign_in user
+      end
+
+      it "距離感入りの0件メッセージを表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
+        get places_path, params: { q: { distance_eq: "far" } }
+        expect(response.body).to include("遠出の場所はありません")
+        expect(response.parsed_body.css("a[aria-current='page']").map(&:text)).to eq([ "遠出" ])
+        expect(response.body).not_to include("まだ場所がありません")
+      end
+
+      it "不正な値ならエラーにせず0件メッセージを表示すること", :aggregate_failures do
+        get places_path, params: { q: { distance_eq: "xxx" } }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("該当する場所はありません")
+      end
+    end
+
+    context "ログイン済みで q が想定外の形の場合" do
+      before do
+        create(:place, group: user.group, name: "江ノ島")
+        sign_in user
+      end
+
+      [ "q=near", "q[distance_eq][]=near" ].each do |query|
+        it "#{query} ならエラーにせず全件を表示すること", :aggregate_failures do
+          get "#{places_path}?#{query}"
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to include("江ノ島")
+        end
+      end
+    end
+
+    context "ログイン済みで場所が1件もない場合" do
+      before do
+        create(:place, group: create(:user).group)
+        sign_in user
+      end
+
+      it "案内文と登録画面へのリンクを表示すること", :aggregate_failures do
+        get places_path
+        expect(response.body).to include("まだ場所がありません")
+        expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+      end
+
+      it "絞り込みボタンを表示しないこと" do
+        get places_path
+        expect(response.parsed_body.css("a[href^='#{places_path}?']")).to be_empty
+      end
+    end
+  end
+
   describe "GET /places/new" do
     context "未ログインの場合" do
       it "ログインページにリダイレクトすること" do
@@ -53,6 +203,11 @@ RSpec.describe "Places", type: :request do
       it "距離感のラジオをどれも選択済みにしないこと" do
         get new_place_path
         expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
+      end
+
+      it "一覧へのリンクを表示すること" do
+        get new_place_path
+        expect(response.parsed_body.at_css("a[href='#{places_path}']")&.text).to eq("一覧を見る")
       end
     end
   end

@@ -1,0 +1,30 @@
+- content_for :title, "ストック一覧"
+.d-flex.justify-content-between.align-items-center.mb-3
+  %h1.h3.mb-0 ストック一覧
+  - if @any_places
+    = link_to "場所を登録する", new_place_path, class: "btn btn-primary btn-sm"
+- if @any_places
+  %nav.d-flex.flex-wrap.gap-2.mb-3{ aria: { label: "距離感で絞り込む" } }
+    -# 選択中のボタンは塗りつぶしにし、aria-current を付ける
+    - [ [ "すべて", nil ], *distance_options ].each do |label, distance|
+      - selected = @q.distance_eq.to_s == distance.to_s
+      = link_to label,
+        places_path(distance ? { q: { distance_eq: distance } } : {}),
+        class: [ "btn", selected ? "btn-primary" : "btn-outline-primary" ],
+        aria: { current: selected ? "page" : nil }
+  -# load してから any? を呼び、件数確認と一覧表示の問い合わせを1回にまとめる
+  - if @places.load.any?
+    %ul.list-group
+      - @places.each do |place|
+        %li.list-group-item
+          .d-flex.justify-content-between.align-items-start.gap-2
+            .fw-bold= place.name
+            %span.badge.text-bg-secondary.flex-shrink-0= distance_label(place.distance)
+          .text-body-secondary= place.note
+  - elsif Place.distances.key?(@q.distance_eq.to_s)
+    %p.text-body-secondary #{distance_label(@q.distance_eq)}の場所はありません
+  - else
+    %p.text-body-secondary 該当する場所はありません
+- else
+  %p.text-body-secondary まだ場所がありません
+  = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
