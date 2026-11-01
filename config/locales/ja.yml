@@ -2,6 +2,7 @@ ja:
   activerecord:
     models:
       user: ユーザー
+      place: 場所
     attributes:
       user:
         name: 名前
@@ -10,3 +11,11 @@ ja:
         password_confirmation: パスワード（確認）
         current_password: 現在のパスワード
         remember_me: ログイン状態を保持する
+      place:
+        name: 場所の名前
+        note: 一言
+        distance: 距離感
+      place/distance:
+        near: 近場
+        day_trip: 日帰り
+        far: 遠出

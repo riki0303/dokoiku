@@ -1,2 +1,8 @@
 @import 'bootstrap/scss/bootstrap';
 @import 'bootstrap-icons/font/bootstrap-icons';
+
+// Simple Form は radio / check box の legend 直後に hidden input を置くため、
+// Bootstrap の `legend + * { clear: left; }` が hidden に当たり、最初の選択肢が float した legend に回り込む
+legend + input[type="hidden"] + * {
+  clear: left;
+}
