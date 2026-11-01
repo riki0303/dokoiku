@@ -24,6 +24,11 @@ RSpec.describe "Dashboards", type: :request do
         get root_path
         expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
+
+      it "ストック一覧へのリンクを表示すること" do
+        get root_path
+        expect(response.parsed_body.at_css("a[href='#{places_path}']")&.text).to eq("ストック一覧")
+      end
     end
   end
 end

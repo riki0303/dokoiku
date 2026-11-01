@@ -8,5 +8,7 @@
       = f.input :note, input_html: { maxlength: 200 }
       = f.input :distance,
         as: :radio_buttons,
-        collection: Place.distances.keys.map { |key| [Place.human_attribute_name("distance.#{key}"), key] }
+        collection: distance_options
       = f.button :submit, "登録する", class: "btn-primary w-100"
+    .text-center.mt-3
+      = link_to "一覧を見る", places_path

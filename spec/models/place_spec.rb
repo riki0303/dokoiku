@@ -61,4 +61,18 @@ RSpec.describe Place, type: :model do
       end
     end
   end
+
+  describe "ransack の許可リスト" do
+    it "検索できる項目は distance だけであること" do
+      expect(described_class.ransackable_attributes).to eq(%w[distance])
+    end
+
+    it "関連の検索を許可しないこと（ApplicationRecord の既定）" do
+      expect(described_class.ransackable_associations).to be_empty
+    end
+
+    it "並び替えを許可しないこと" do
+      expect(described_class.ransortable_attributes).to be_empty
+    end
+  end
 end

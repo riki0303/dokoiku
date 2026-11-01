@@ -30,5 +30,5 @@
   - アセット配信は Propshaft
 
 ### 導入状況
-- Pundit / RSpec (+ factory_bot_rails) / Capybara + selenium-webdriver (system spec は headless Chrome) / Haml (haml-rails) / Simple Form (Bootstrap 設定込み) / rails_best_practices は導入・初期化済み
+- Pundit / RSpec (+ factory_bot_rails) / Capybara + selenium-webdriver (system spec は headless Chrome) / Haml (haml-rails) / Simple Form (Bootstrap 設定込み) / ransack / rails_best_practices は導入・初期化済み
 - rails_best_practices は `bundle exec rails_best_practices .` で実行する（binstub は置かない）

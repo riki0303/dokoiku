@@ -31,6 +31,8 @@ gem "devise"
 gem "devise-i18n"
 # Locale data for Rails (Japanese translations) [https://github.com/svenfuchs/rails-i18n]
 gem "rails-i18n"
+# Object-based searching for Active Record [https://github.com/activerecord-hackery/ransack]
+gem "ransack"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
