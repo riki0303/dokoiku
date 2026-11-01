@@ -98,6 +98,13 @@ RSpec.describe "Places", type: :request do
         get places_path
         expect(response.body).not_to match(/\d+\s*(分|時間|km|キロ)/)
       end
+
+      it "各行に編集画面へのリンクを表示すること" do
+        get places_path
+        links = response.parsed_body.css(".list-group-item a").map { |link| [ link.text, link["href"] ] }
+        expected = Place.where(group: user.group).order(created_at: :desc).map { |place| [ "編集", edit_place_path(place) ] }
+        expect(links).to eq(expected)
+      end
     end
 
     context "ログイン済みで絞り込んだ結果だけ0件の場合" do
@@ -269,6 +276,174 @@ RSpec.describe "Places", type: :request do
           expect(response.body).to include("を入力してください")
           expect(response.body).to include(*kept_values)
         end
+      end
+    end
+  end
+
+  describe "GET /places/:id/edit" do
+    let!(:place) { create(:place, group: user.group, name: "江ノ島", note: "夕日を見に行きたい", distance: :day_trip) }
+
+    context "未ログインの場合" do
+      it "ログインページにリダイレクトすること" do
+        get edit_place_path(place)
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+
+    context "ログイン済みで自分のグループの場所の場合" do
+      let(:html) { response.parsed_body }
+      let(:delete_form) { html.at_css("form[data-turbo-confirm]") }
+
+      before do
+        sign_in user
+        get edit_place_path(place)
+      end
+
+      it "今の値が入った編集フォームを表示すること", :aggregate_failures do
+        expect(response).to have_http_status(:ok)
+        expect(html.at_css("input[name='place[name]']")["value"]).to eq("江ノ島")
+        expect(html.at_css("input[name='place[note]']")["value"]).to eq("夕日を見に行きたい")
+        expect(html.at_css("input[type=radio][name='place[distance]'][checked]")["value"]).to eq("day_trip")
+      end
+
+      it "確認ダイアログ付きの削除ボタンを表示すること", :aggregate_failures do
+        expect(delete_form.to_h).to include("action" => place_path(place), "data-turbo-confirm" => "江ノ島を削除しますか？")
+        expect(delete_form.at_css("input[name='_method']")["value"]).to eq("delete")
+        expect(delete_form.at_css("button").text).to eq("削除する")
+      end
+
+      # フォームの中にフォームがあると HTML として壊れるため
+      it "削除ボタンを編集フォームの外に置くこと" do
+        expect(delete_form.ancestors("form")).to be_empty
+      end
+
+      it "一覧へ戻るリンクを表示すること" do
+        expect(html.at_css("a[href='#{places_path}']")&.text).to eq("一覧に戻る")
+      end
+    end
+
+    context "ログイン済みで他のグループの場所の場合" do
+      let(:other_place) { create(:place, group: create(:user).group) }
+
+      before { sign_in user }
+
+      it "404 を返すこと" do
+        get edit_place_path(other_place)
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  describe "PATCH /places/:id" do
+    let!(:place) { create(:place, group: user.group, name: "江ノ島", note: "夕日を見に行きたい", distance: :day_trip) }
+    let(:update_params) { { place: { name: "鎌倉", note: "大仏を見たい", distance: "far" } } }
+
+    context "未ログインの場合" do
+      it "ログインページにリダイレクトし、場所を更新しないこと", :aggregate_failures do
+        patch place_path(place), params: update_params
+        expect(response).to redirect_to(new_user_session_path)
+        expect(place.reload.name).to eq("江ノ島")
+      end
+    end
+
+    context "ログイン済みで正しい入力の場合" do
+      before { sign_in user }
+
+      it "場所を更新すること" do
+        patch place_path(place), params: update_params
+        expect(place.reload).to have_attributes(name: "鎌倉", note: "大仏を見たい", distance: "far")
+      end
+
+      it "一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
+        patch place_path(place), params: update_params
+        expect(response).to redirect_to(places_path)
+        follow_redirect!
+        expect(response.body).to include("鎌倉を更新しました")
+      end
+    end
+
+    context "ログイン済みで他のグループの group_id を送った場合" do
+      let(:other_group) { create(:user).group }
+
+      before { sign_in user }
+
+      it "送った group_id を無視し、グループを変えないこと" do
+        patch place_path(place), params: { place: update_params[:place].merge(group_id: other_group.id) }
+        expect(place.reload.group).to eq(user.group)
+      end
+    end
+
+    context "ログイン済みで名前が空の場合" do
+      let(:params) { { place: update_params[:place].merge(name: "") } }
+
+      before { sign_in user }
+
+      it "422 を返し、場所を更新しないこと", :aggregate_failures do
+        patch place_path(place), params: params
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(place.reload).to have_attributes(name: "江ノ島", note: "夕日を見に行きたい", distance: "day_trip")
+      end
+
+      it "入力値を保持して編集フォームを再表示すること", :aggregate_failures do
+        patch place_path(place), params: params
+        expect(response.body).to include("を入力してください", "大仏を見たい", 'value="far" checked="checked"')
+        expect(response.parsed_body.at_css("input[type=submit]")["value"]).to eq("更新する")
+      end
+
+      it "削除の確認文言には未保存の名前ではなく DB 上の名前を使うこと" do
+        patch place_path(place), params: params
+        expect(response.parsed_body.at_css("form[data-turbo-confirm]")["data-turbo-confirm"]).to eq("江ノ島を削除しますか？")
+      end
+    end
+
+    context "ログイン済みで他のグループの場所の場合" do
+      let!(:other_place) { create(:place, group: create(:user).group, name: "他人の場所") }
+
+      before { sign_in user }
+
+      it "404 を返し、場所を更新しないこと", :aggregate_failures do
+        patch place_path(other_place), params: update_params
+        expect(response).to have_http_status(:not_found)
+        expect(other_place.reload.name).to eq("他人の場所")
+      end
+    end
+  end
+
+  describe "DELETE /places/:id" do
+    let!(:place) { create(:place, group: user.group, name: "江ノ島") }
+
+    context "未ログインの場合" do
+      it "ログインページにリダイレクトし、場所を削除しないこと", :aggregate_failures do
+        expect { delete place_path(place) }.not_to change(Place, :count)
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+
+    context "ログイン済みで自分のグループの場所の場合" do
+      before { sign_in user }
+
+      it "場所を削除すること", :aggregate_failures do
+        expect { delete place_path(place) }.to change(Place, :count).by(-1)
+        expect(Place.exists?(place.id)).to be(false)
+      end
+
+      it "303 で一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
+        delete place_path(place)
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(places_path)
+        follow_redirect!
+        expect(response.body).to include("江ノ島を削除しました")
+      end
+    end
+
+    context "ログイン済みで他のグループの場所の場合" do
+      let!(:other_place) { create(:place, group: create(:user).group) }
+
+      before { sign_in user }
+
+      it "404 を返し、場所を削除しないこと", :aggregate_failures do
+        expect { delete place_path(other_place) }.not_to change(Place, :count)
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
