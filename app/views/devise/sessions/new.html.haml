@@ -2,7 +2,8 @@
 .row.justify-content-center
   .col-md-6.col-lg-5
     %h1.h3.mb-4= t(".sign_in")
-    = simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
+    = simple_form_for(resource, as: resource_name, url: session_path(resource_name),
+      defaults: { label_text: label_text_without_required_mark }) do |f|
       = f.input :email, required: true, autofocus: true, input_html: { autocomplete: "email" }
       = f.input :password, required: true, input_html: { autocomplete: "current-password" }
       - if devise_mapping.rememberable?
