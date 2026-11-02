@@ -8,33 +8,8 @@ RSpec.describe "Places", type: :system do
     sign_in user
   end
 
-  describe "編集" do
-    before do
-      visit places_path
-      click_link "編集"
-    end
-
-    it "一覧の「編集」から、今の値が入った編集画面を開けること" do
-      expect(page).to have_field("place[name]", with: "江ノ島")
-    end
-
-    context "値を変えて更新した場合" do
-      before do
-        fill_in "place[name]", with: "鎌倉"
-        fill_in "place[note]", with: "大仏を見たい"
-        choose "遠出"
-        click_button "更新する"
-      end
-
-      it "完了メッセージ付きで一覧に戻り、変更後の内容が出ること", :aggregate_failures do
-        expect(page).to have_content("鎌倉を更新しました")
-        expect(page).to have_current_path(places_path)
-        expect(page).to have_css(".list-group-item", text: "大仏を見たい")
-        expect(page).to have_no_content("江ノ島")
-      end
-    end
-  end
-
+  # 編集の流れは JavaScript を使わないため request spec で担保する。
+  # ここでは Turbo の確認ダイアログ(JavaScript)を伴う削除だけを確認する。
   describe "削除" do
     before { visit edit_place_path(Place.find_by!(name: "江ノ島")) }
 
