@@ -2,13 +2,6 @@
 .row.justify-content-center
   .col-md-6.col-lg-5
     %h1.h3.mb-4 場所を登録する
-    = simple_form_for(@place) do |f|
-      = render "shared/error_messages", model: @place
-      = f.input :name, autofocus: true, input_html: { maxlength: 100 }
-      = f.input :note, input_html: { maxlength: 200 }
-      = f.input :distance,
-        as: :radio_buttons,
-        collection: distance_options
-      = f.button :submit, "登録する", class: "btn-primary w-100"
+    = render "form", place: @place, submit_label: "登録する"
     .text-center.mt-3
       = link_to "一覧を見る", places_path

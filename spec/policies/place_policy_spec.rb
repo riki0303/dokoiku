@@ -12,12 +12,18 @@ RSpec.describe PlacePolicy do
     it { expect(policy.index?).to be(true) }
     it { expect(policy.create?).to be(true) }
     it { expect(policy.new?).to be(true) }
+    it { expect(policy.edit?).to be(true) }
+    it { expect(policy.update?).to be(true) }
+    it { expect(policy.destroy?).to be(true) }
   end
 
   context "他のグループの場所の場合" do
     let(:user) { create(:user) }
 
     it { expect(policy.create?).to be(false) }
+    it { expect(policy.edit?).to be(false) }
+    it { expect(policy.update?).to be(false) }
+    it { expect(policy.destroy?).to be(false) }
   end
 
   context "未ログインの場合" do
@@ -25,6 +31,9 @@ RSpec.describe PlacePolicy do
 
     it { expect(policy.index?).to be(false) }
     it { expect(policy.create?).to be(false) }
+    it { expect(policy.edit?).to be(false) }
+    it { expect(policy.update?).to be(false) }
+    it { expect(policy.destroy?).to be(false) }
   end
 
   describe "Scope" do

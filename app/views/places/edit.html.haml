@@ -1,0 +1,14 @@
+- content_for :title, "場所を編集する"
+.row.justify-content-center
+  .col-md-6.col-lg-5
+    %h1.h3.mb-4 場所を編集する
+    = render "form", place: @place, submit_label: "更新する"
+    -# フォームの中にフォームを入れると HTML として壊れるため、削除ボタンは編集フォームの外に置く
+    -# 入力エラーで再表示したときに未保存の名前が出ないよう、確認文言には DB 上の名前を使う
+    .mt-4
+      = button_to "削除する", place_path(@place),
+        method: :delete,
+        class: "btn btn-outline-danger w-100",
+        form: { data: { turbo_confirm: "#{@place.name_in_database}を削除しますか？" } }
+    .text-center.mt-3
+      = link_to "一覧に戻る", places_path
