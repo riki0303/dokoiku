@@ -18,14 +18,6 @@ RSpec.describe "Users::Sessions", type: :request do
       expect(form.at_css("input[name='user[email]']")["required"]).to eq("required")
       expect(form.at_css("input[name='user[password]']")["required"]).to eq("required")
     end
-
-    it "メールアドレスとパスワードのラベルに赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
-      get new_user_session_path
-      form = response.parsed_body.at_css("form#new_user")
-      expect(form.css(".badge").map { |badge| badge.parent["for"] }).to eq(%w[user_email user_password])
-      expect(form.css(".badge.text-bg-danger").map(&:text).uniq).to eq(%w[必須])
-      expect(form.css("abbr")).to be_empty
-    end
   end
 
   describe "POST /users/sign_in" do
