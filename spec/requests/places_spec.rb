@@ -207,6 +207,14 @@ RSpec.describe "Places", type: :request do
         expect(radios.map { |radio| radio["required"] }).to eq(%w[required required required])
       end
 
+      it "場所の名前・一言・距離感(legend)に赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
+        get new_place_path
+        badges = response.parsed_body.css("form#new_place .badge.text-bg-danger")
+        expect(badges.map { |badge| badge.parent["for"] || badge.parent.name }).to eq(%w[place_name place_note legend])
+        expect(badges.map(&:text).uniq).to eq(%w[必須])
+        expect(response.parsed_body.css("form#new_place abbr")).to be_empty
+      end
+
       it "距離感のラジオをどれも選択済みにしないこと" do
         get new_place_path
         expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
@@ -304,6 +312,13 @@ RSpec.describe "Places", type: :request do
         expect(html.at_css("input[name='place[name]']")["value"]).to eq("江ノ島")
         expect(html.at_css("input[name='place[note]']")["value"]).to eq("夕日を見に行きたい")
         expect(html.at_css("input[type=radio][name='place[distance]'][checked]")["value"]).to eq("day_trip")
+      end
+
+      it "場所の名前・一言・距離感(legend)に赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
+        badges = html.css("form#edit_place_#{place.id} .badge.text-bg-danger")
+        expect(badges.map { |badge| badge.parent["for"] || badge.parent.name }).to eq(%w[place_name place_note legend])
+        expect(badges.map(&:text).uniq).to eq(%w[必須])
+        expect(html.css("form#edit_place_#{place.id} abbr")).to be_empty
       end
 
       it "確認ダイアログ付きの削除ボタンを表示すること", :aggregate_failures do

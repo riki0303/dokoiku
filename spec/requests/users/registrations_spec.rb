@@ -15,6 +15,14 @@ RSpec.describe "Users::Registrations", type: :request do
       expect(form.at_css("input[name='user[name]']")["required"]).to eq("required")
       expect(form.at_css("input[name='user[email]']")["required"]).to eq("required")
     end
+
+    it "すべての入力欄のラベルに赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
+      get new_user_registration_path
+      form = response.parsed_body.at_css("form#new_user")
+      expect(form.css(".badge").map { |badge| badge.parent["for"] }).to eq(%w[user_name user_email user_password user_password_confirmation])
+      expect(form.css(".badge.text-bg-danger").map(&:text).uniq).to eq(%w[必須])
+      expect(form.css("abbr")).to be_empty
+    end
   end
 
   describe "POST /users" do
@@ -99,6 +107,15 @@ RSpec.describe "Users::Registrations", type: :request do
         get edit_user_registration_path
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("アカウント削除")
+      end
+
+      # 新しいパスワード・確認用は空欄なら変更しない任意項目のため、バッジは付けない
+      it "名前・メールアドレス・現在のパスワードだけに赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
+        get edit_user_registration_path
+        form = response.parsed_body.at_css("form#edit_user")
+        expect(form.css(".badge").map { |badge| badge.parent["for"] }).to eq(%w[user_name user_email user_current_password])
+        expect(form.css(".badge.text-bg-danger").map(&:text).uniq).to eq(%w[必須])
+        expect(form.css("abbr")).to be_empty
       end
     end
   end
