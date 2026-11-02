@@ -3,7 +3,7 @@ ja:
     "yes": "はい"
     "no": "いいえ"
     required:
-      text: "必須"
-      mark: "*"
+      # 必須項目のラベル末尾に赤い「必須」バッジを表示する（text / mark は html 指定時は使われない）
+      html: '<span class="badge text-bg-danger">必須</span>'
     error_notification:
       default_message: "入力内容を確認してください。"
