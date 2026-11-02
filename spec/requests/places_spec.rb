@@ -278,6 +278,29 @@ RSpec.describe "Places", type: :request do
         end
       end
     end
+
+    context "ログイン済みで distance に不正な値を送った場合" do
+      let(:params) { { place: valid_params[:place].merge(distance: "xxx") } }
+
+      before { sign_in user }
+
+      it "422 を返し、場所を登録しないこと", :aggregate_failures do
+        expect { post places_path, params: params }.not_to change(Place, :count)
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it "エラーを表示し、名前・一言の入力値を保持してフォームを再表示すること", :aggregate_failures do
+        post places_path, params: params
+        expect(response.body).to include("距離感は一覧にありません")
+        expect(response.parsed_body.at_css("input[name='place[name]']")["value"]).to eq("江ノ島")
+        expect(response.parsed_body.at_css("input[name='place[note]']")["value"]).to eq("夕日を見に行きたい")
+      end
+
+      it "距離感のラジオをどれも選択済みにしないこと" do
+        post places_path, params: params
+        expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
+      end
+    end
   end
 
   describe "GET /places/:id/edit" do
@@ -393,6 +416,31 @@ RSpec.describe "Places", type: :request do
       it "削除の確認文言には未保存の名前ではなく DB 上の名前を使うこと" do
         patch place_path(place), params: params
         expect(response.parsed_body.at_css("form[data-turbo-confirm]")["data-turbo-confirm"]).to eq("江ノ島を削除しますか？")
+      end
+    end
+
+    context "ログイン済みで distance に不正な値を送った場合" do
+      let(:params) { { place: update_params[:place].merge(distance: "xxx") } }
+
+      before { sign_in user }
+
+      it "422 を返し、場所を更新しないこと", :aggregate_failures do
+        patch place_path(place), params: params
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(place.reload).to have_attributes(name: "江ノ島", note: "夕日を見に行きたい", distance: "day_trip")
+      end
+
+      it "入力値を保持して編集フォームを再表示すること", :aggregate_failures do
+        patch place_path(place), params: params
+        expect(response.body).to include("距離感は一覧にありません")
+        expect(response.parsed_body.at_css("input[name='place[name]']")["value"]).to eq("鎌倉")
+        expect(response.parsed_body.at_css("input[name='place[note]']")["value"]).to eq("大仏を見たい")
+        expect(response.parsed_body.at_css("input[type=submit]")["value"]).to eq("更新する")
+      end
+
+      it "距離感のラジオをどれも選択済みにしないこと" do
+        patch place_path(place), params: params
+        expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
       end
     end
 

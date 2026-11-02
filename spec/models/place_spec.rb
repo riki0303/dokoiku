@@ -55,6 +55,19 @@ RSpec.describe Place, type: :model do
         end
       end
 
+      it "一覧にない値なら無効で、エラーが1件だけ出ること", :aggregate_failures do
+        place.distance = "xxx"
+        expect(place).not_to be_valid
+        expect(place.errors[:distance]).to eq([ "は一覧にありません" ])
+      end
+
+      %w[near day_trip far].each do |value|
+        it "#{value} なら有効であること" do
+          place.distance = value
+          expect(place).to be_valid
+        end
+      end
+
       it "DB には文字列で保存されること" do
         place = create(:place, distance: :day_trip)
         expect(place.distance_before_type_cast).to eq("day_trip")
