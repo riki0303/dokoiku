@@ -19,12 +19,12 @@ RSpec.describe "Users::Sessions", type: :request do
       expect(form.at_css("input[name='user[password]']")["required"]).to eq("required")
     end
 
-    # required 属性は上の例で確認済み。ここでは見た目の必須表示が出ないことだけを確認する
-    it "ラベルに「必須」バッジも abbr の * も表示しないこと", :aggregate_failures do
+    it "メールアドレスとパスワードのラベルに赤い「必須」バッジを表示し、abbr の * は出さないこと", :aggregate_failures do
       get new_user_session_path
       form = response.parsed_body.at_css("form#new_user")
-      expect(%w[user_email user_password].map { |id| form.at_css("label[for='#{id}']").text.strip }).to eq(%w[メールアドレス パスワード])
-      expect(form.css(".badge, abbr")).to be_empty
+      expect(form.css(".badge").map { |badge| badge.parent["for"] }).to eq(%w[user_email user_password])
+      expect(form.css(".badge.text-bg-danger").map(&:text).uniq).to eq(%w[必須])
+      expect(form.css("abbr")).to be_empty
     end
   end
 

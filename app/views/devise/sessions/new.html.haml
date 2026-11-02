@@ -2,12 +2,9 @@
 .row.justify-content-center
   .col-md-6.col-lg-5
     %h1.h3.mb-4= t(".sign_in")
-    -# ログイン画面では必須バッジを出さない。required: false にすると HTML の required 属性まで
-    -# 外れてしまうため、required: true のままラベル文言だけを返す label_text で差し替える
-    - label_without_badge = ->(label, _required, _explicit_label) { label }
     = simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
-      = f.input :email, required: true, label_text: label_without_badge, autofocus: true, input_html: { autocomplete: "email" }
-      = f.input :password, required: true, label_text: label_without_badge, input_html: { autocomplete: "current-password" }
+      = f.input :email, required: true, autofocus: true, input_html: { autocomplete: "email" }
+      = f.input :password, required: true, input_html: { autocomplete: "current-password" }
       - if devise_mapping.rememberable?
         = f.input :remember_me, as: :boolean
       = f.button :submit, t(".sign_in"), class: "btn-primary w-100"
