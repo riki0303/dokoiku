@@ -1,14 +1,23 @@
-%nav.navbar.navbar-expand.navbar-dark.bg-dark.mb-4
+-# スマホ幅ではリンクが横に並びきらないため、md 未満はハンバーガーメニューに畳む
+%nav.navbar.navbar-expand-md.navbar-dark.bg-dark.mb-4
   .container
     = link_to "Dokoiku", root_path, class: "navbar-brand"
-    %ul.navbar-nav.ms-auto.align-items-center
-      - if user_signed_in?
-        %li.nav-item
-          = link_to current_user.name, edit_user_registration_path, class: "nav-link"
-        %li.nav-item.ms-2
-          = button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn btn-outline-light btn-sm"
-      - else
-        %li.nav-item
-          = link_to t("devise.shared.links.sign_in"), new_user_session_path, class: "nav-link"
-        %li.nav-item
-          = link_to t("devise.shared.links.sign_up"), new_user_registration_path, class: "nav-link"
+    %button.navbar-toggler{ type: "button", data: { bs_toggle: "collapse", bs_target: "#navbar-menu" },
+      aria: { controls: "navbar-menu", expanded: "false", label: "メニューを開く" } }
+      %span.navbar-toggler-icon
+    .collapse.navbar-collapse#navbar-menu
+      %ul.navbar-nav.ms-auto.align-items-md-center
+        - if user_signed_in?
+          %li.nav-item
+            = link_to "場所を登録", new_place_path, class: "nav-link"
+          %li.nav-item
+            = link_to "ストック一覧", places_path, class: "nav-link"
+          %li.nav-item
+            = link_to current_user.name, edit_user_registration_path, class: "nav-link"
+          %li.nav-item.ms-md-2.py-2.py-md-0
+            = button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn btn-outline-light btn-sm"
+        - else
+          %li.nav-item
+            = link_to t("devise.shared.links.sign_in"), new_user_session_path, class: "nav-link"
+          %li.nav-item
+            = link_to t("devise.shared.links.sign_up"), new_user_registration_path, class: "nav-link"

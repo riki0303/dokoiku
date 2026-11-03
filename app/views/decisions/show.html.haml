@@ -1,0 +1,34 @@
+- content_for :title, "今日決める"
+%h1.fs-3.mb-3 今日決める
+- if @any_places
+  %nav.d-flex.flex-wrap.gap-2.mb-3{ aria: { label: "距離感で絞り込む" } }
+    -# 選択中のボタンは塗りつぶしにし、aria-current を付ける
+    - [ [ "すべて", nil ], *distance_options ].each do |label, distance|
+      - selected = @distance.to_s == distance.to_s
+      = link_to label,
+        root_path(distance ? { distance: distance } : {}),
+        class: [ "btn", selected ? "btn-primary" : "btn-outline-primary" ],
+        aria: { current: selected ? "page" : nil }
+  -# load してから any? を呼び、件数確認と表示の問い合わせを1回にまとめる
+  - if @places.load.any?
+    .row.g-3.mb-3
+      - @places.each do |place|
+        .col-12.col-md-4
+          .card.h-100
+            .card-body.d-flex.flex-column
+              -# 場所の名前を一言より目立たせる
+              %h2.fs-4.fw-bold.card-title.mb-2= place.name
+              %p.card-text.mb-2= place.note
+              .d-flex.flex-wrap.align-items-center.gap-2.mb-3.small.text-body-secondary
+                %span.badge.text-bg-secondary= distance_label(place.distance)
+                %span= registered_ago(place)
+              = link_to "これにする", google_maps_search_url(place),
+                class: "btn btn-primary mt-auto", target: "_blank", rel: "noopener noreferrer"
+    = button_to "別の3件", redraw_decision_path, params: { distance: @distance }.compact,
+      class: "btn btn-outline-secondary"
+  - else
+    %p.text-body-secondary 今日はもう候補がありません
+    = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
+- else
+  %p.text-body-secondary まだ場所がありません
+  = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"

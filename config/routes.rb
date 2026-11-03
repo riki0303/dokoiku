@@ -2,6 +2,10 @@ Rails.application.routes.draw do
   devise_for :users
 
   resources :places, only: %i[index new create edit update destroy]
+  # 今日決める画面は root で表示する。ここでは「別の3件」だけを生やす
+  resource :decision, only: [] do
+    post :redraw
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -14,5 +18,5 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root "dashboards#show"
+  root "decisions#show"
 end

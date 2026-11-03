@@ -2,11 +2,11 @@
 
 class PlacePolicy < ApplicationPolicy
   def index?
-    user.present?
+    logged_in?
   end
 
   def create?
-    user.present? && user.group_ids.include?(record.group_id)
+    logged_in? &&user.group_ids.include?(record.group_id)
   end
 
   # 編集・削除も登録と同じく、自分のグループの場所だけを対象にする

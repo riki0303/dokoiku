@@ -6,6 +6,8 @@
     %meta{name: "apple-mobile-web-app-capable", content: "yes"}
     %meta{name: "application-name", content: "Dokoiku"}
     %meta{name: "mobile-web-app-capable", content: "yes"}
+    -# Turbo 8 はリンクにマウスを乗せただけで GET を先読みする。今日決める画面は GET で山札を引くため、乗せただけで候補が減らないよう止める
+    %meta{ name: "turbo-prefetch", content: "false" }
     = csrf_meta_tags
     = csp_meta_tag
 

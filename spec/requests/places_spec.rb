@@ -79,7 +79,7 @@ RSpec.describe "Places", type: :request do
 
       it "見出し横に登録画面へのリンクを表示すること" do
         get places_path
-        expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
       it "選択中のボタンだけを塗りつぶし、aria-current を付けること", :aggregate_failures do
@@ -151,7 +151,7 @@ RSpec.describe "Places", type: :request do
       it "案内文と登録画面へのリンクを表示すること", :aggregate_failures do
         get places_path
         expect(response.body).to include("まだ場所がありません")
-        expect(response.parsed_body.at_css("a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
       it "絞り込みボタンを表示しないこと" do
@@ -214,7 +214,7 @@ RSpec.describe "Places", type: :request do
 
       it "一覧へのリンクを表示すること" do
         get new_place_path
-        expect(response.parsed_body.at_css("a[href='#{places_path}']")&.text).to eq("一覧を見る")
+        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("一覧を見る")
       end
     end
   end
@@ -341,7 +341,7 @@ RSpec.describe "Places", type: :request do
       end
 
       it "一覧へ戻るリンクを表示すること" do
-        expect(html.at_css("a[href='#{places_path}']")&.text).to eq("一覧に戻る")
+        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("一覧に戻る")
       end
     end
 

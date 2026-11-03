@@ -36,6 +36,13 @@ class ApplicationPolicy
     false
   end
 
+  private
+
+  # ログイン中か
+  def logged_in?
+    user.present?
+  end
+
   class Scope
     def initialize(user, scope)
       @user = user
