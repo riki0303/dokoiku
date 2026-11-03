@@ -8,7 +8,9 @@ class DecisionsController < ApplicationController
     @any_places = own_places.exists?
 
     deck = TodayDeck.new(session[:today], own_places)
-    hand_ids = deck.hand(@distance)
+    hand_ids = deck.current_hand(@distance)
+    # 再読み込みでは同じ手札を出し、手札がなければ（初回・距離感の切り替え・引き切り・削除）新しく引く
+    hand_ids = deck.draw(@distance) if hand_ids.empty?
     session[:today] = deck.to_h
     # セッションの id は信用せず、自分のグループの場所から取り直す（引いたあとに削除された場所は出さない）
     @places = own_places.in_order_of(:id, hand_ids)

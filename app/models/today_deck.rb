@@ -2,7 +2,8 @@
 # その日に出した場所（seen_ids）と、いま出している3件（hand_ids）をセッションの Hash で受け渡しする
 #
 #   deck = TodayDeck.new(session[:today], policy_scope(Place))
-#   hand_ids = deck.hand(distance)
+#   hand_ids = deck.current_hand(distance)
+#   hand_ids = deck.draw(distance) if hand_ids.empty?
 #   session[:today] = deck.to_h
 class TodayDeck
   HAND_SIZE = 3
@@ -16,16 +17,14 @@ class TodayDeck
     reset(today.iso8601) unless @state["date"] == today.iso8601
   end
 
-  # 手札の place_id を返す。手札を引いたときと同じ距離感なら同じ手札を返し（再読み込みで山札を減らさない）、
-  # 距離感が違う・手札が空（引き切った・手札の場所がすべて削除された）なら新しく引く
-  def hand(distance)
-    if @state["distance"] == distance
-      # セッションの id のうち、まだ候補に残っているものだけを手札とみなす
-      remaining = hand_ids & @scope.where(id: hand_ids).ids
-      return remaining if remaining.any?
-    end
+  # いま出している手札の place_id を返す（山札は進めない）。
+  # 手札を引いたときと同じ距離感のときだけ、まだ候補に残っているものを返す。
+  # 距離感が違う・手札が空（初回・引き切った・手札の場所がすべて削除された）なら []
+  def current_hand(distance)
+    return [] unless @state["distance"] == distance
 
-    draw(distance)
+    # セッションの id のうち、まだ候補に残っているものだけを手札とみなす
+    hand_ids & @scope.where(id: hand_ids).ids
   end
 
   # まだ出していない場所から、次の手札を最大3件ランダムに引く。距離感を指定するとその距離感だけから引く
