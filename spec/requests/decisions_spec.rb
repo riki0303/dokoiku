@@ -90,11 +90,11 @@ RSpec.describe "Decisions", type: :request do
         expect(response.body).to include("江ノ島", "夕日を見に行きたい", "日帰り", "3ヶ月前に登録")
       end
 
-      it "一言を名前より前に、大きく表示すること", :aggregate_failures do
+      it "名前を一言より前に、大きく表示すること", :aggregate_failures do
         get root_path
         card = response.parsed_body.at_css(".card-body")
-        expect(card.css("p.fw-bold, .card-title").map(&:text)).to eq(%w[夕日を見に行きたい 江ノ島])
-        expect(card.at_css("p.fw-bold")["class"]).to include("fs-4")
+        expect(card.css(".card-title, .card-text").map(&:text)).to eq(%w[江ノ島 夕日を見に行きたい])
+        expect(card.at_css(".card-title")["class"]).to include("fs-4", "fw-bold")
       end
 
       it "他のグループの場所を表示しないこと" do
