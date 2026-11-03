@@ -8,6 +8,12 @@ RSpec.describe "Decisions", type: :system do
     all(".card-title").map(&:text)
   end
 
+  # 絞り込みボタンを押し、選んだ距離感の画面に入れ替わるまで待つ（次の操作や確認を前の画面に対して行わないため）
+  def click_distance(label)
+    click_link label
+    find("a[aria-current='page']", text: label)
+  end
+
   context "未ログインの場合" do
     before do
       create(:place, group: user.group, name: "江ノ島", note: "夕日を見に行きたい")
@@ -60,6 +66,13 @@ RSpec.describe "Decisions", type: :system do
       click_button "別の3件"
       expect(page).to have_content("今日はもう候補がありません")
       expect(page).to have_link("場所を登録する", href: new_place_path)
+    end
+
+    it "絞り込みボタンで「すべて → 近場 → すべて」と切り替えると、同じ場所に戻ること" do
+      first = all(".card-title", count: 3).map(&:text)
+      click_distance "近場"
+      click_distance "すべて"
+      expect(shown_names).to eq(first)
     end
 
     it "ナビバーから場所の登録画面へ移動できること" do

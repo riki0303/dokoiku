@@ -9,19 +9,21 @@ class DecisionsController < ApplicationController
 
     deck = TodayDeck.new(session[:today], own_places)
     hand_ids = deck.current_hand(@distance)
-    # 再読み込みでは同じ手札を出し、手札がなければ（初回・距離感の切り替え・引き切り・削除）新しく引く
+    # 再読み込みや距離感の切り替えでは、その距離感で覚えている手札を出す（山札は進めない）。
+    # 手札がなければ（初回・引き切り・手札の場所がすべて削除や他の距離感で見送られた）新しく引く
     hand_ids = deck.draw(@distance) if hand_ids.empty?
     session[:today] = deck.to_h
     # セッションの id は信用せず、自分のグループの場所から取り直す（引いたあとに削除された場所は出さない）
     @places = own_places.in_order_of(:id, hand_ids)
   end
 
-  # 「別の3件」。セッションの山札を進めるため POST にし、再読み込みで引き直さないよう GET の画面へリダイレクトする
+  # 「別の3件」。いま出している手札を見送ってセッションの山札を進めるため POST にし、
+  # 再読み込みで引き直さないよう GET の画面へリダイレクトする
   def redraw
     authorize :decision, :redraw?
     distance = distance_param
     deck = TodayDeck.new(session[:today], policy_scope(Place))
-    deck.draw(distance)
+    deck.redraw(distance)
     session[:today] = deck.to_h
     redirect_to root_path(distance: distance), status: :see_other
   end

@@ -30,7 +30,7 @@ RSpec.describe TodayDeck do
       ids = first.draw(nil)
       second = deck_from(first.to_h)
       expect(second.current_hand(nil)).to eq(ids)
-      expect(second.to_h["seen_ids"]).to eq(ids)
+      expect(second.to_h["seen_ids"]).to eq([])
     end
 
     it "距離感が違うと空を返すこと" do
@@ -58,6 +58,20 @@ RSpec.describe TodayDeck do
       state = JSON.parse(first.to_h.to_json)
       expect(deck_from(state).current_hand(nil)).to eq(ids)
     end
+
+    it "手札を出したあとに距離感が編集された場所は、その距離感の手札から外すこと" do
+      first = deck_from(nil)
+      ids = first.draw("near")
+      Place.find(ids.first).update!(distance: :far)
+      expect(deck_from(first.to_h).current_hand("near")).to eq(ids.drop(1))
+    end
+
+    it "古い形のセッション（距離感ごとの手札がない当日分）はリセットすること", :aggregate_failures do
+      old = { "date" => today.iso8601, "seen_ids" => scope.ids, "hand_ids" => scope.ids.take(3), "distance" => nil }
+      deck = deck_from(old)
+      expect(deck.to_h).to eq("date" => today.iso8601, "seen_ids" => [], "hands" => {})
+      expect(show(deck, nil).size).to eq(3)
+    end
   end
 
   describe "#draw と #current_hand を組み合わせた流れ" do
@@ -76,13 +90,22 @@ RSpec.describe TodayDeck do
         ids = show(first, nil)
         second = deck_from(first.to_h)
         expect(show(second, nil)).to eq(ids)
-        expect(second.to_h["seen_ids"]).to match_array(ids)
+        expect(second.to_h["seen_ids"]).to eq([])
       end
 
-      it "距離感が違うと、新しく引き直すこと" do
+      it "距離感が違うと、その距離感の手札を新しく引き、山札は進めないこと", :aggregate_failures do
         first = deck_from(nil)
-        ids = show(first, nil)
-        expect(show(deck_from(first.to_h), "near")).not_to include(*ids)
+        show(first, nil)
+        deck = deck_from(first.to_h)
+        expect(show(deck, "near").size).to eq(3)
+        expect(deck.to_h["seen_ids"]).to eq([])
+      end
+
+      it "距離感ごとに手札を覚え、元の距離感に戻ると同じ手札を返すこと" do
+        deck = deck_from(nil)
+        first = [ nil, "near" ].map { |distance| show(deck, distance) }
+        again = deck_from(JSON.parse(deck.to_h.to_json))
+        expect([ nil, "near" ].map { |distance| show(again, distance) }).to eq(first)
       end
 
       it "手札の場所がすべて削除された場合、まだ出していない場所から引き直すこと" do
@@ -93,13 +116,36 @@ RSpec.describe TodayDeck do
       end
     end
 
+    context "他の距離感で見送った場所が手札にある場合" do
+      let!(:near_places) { create_list(:place, 2, group: group, distance: :near) }
+      let!(:far_places) { create_list(:place, 2, group: group, distance: :far) }
+
+      # 手札の中身を決めて試すため、セッションの Hash を直接組み立てる
+      def deck_with_hands(hands)
+        deck_from({ "date" => today.iso8601, "seen_ids" => [], "hands" => hands })
+      end
+
+      it "その場所を手札から外し、補充しないこと", :aggregate_failures do
+        deck = deck_with_hands("all" => [ near_places.first.id, *far_places.map(&:id) ], "near" => [ near_places.first.id ])
+        deck.redraw("near")
+        expect(deck.to_h["seen_ids"]).to eq([ near_places.first.id ])
+        expect(show(deck_from(deck.to_h), nil)).to eq(far_places.map(&:id))
+      end
+
+      it "手札がすべて外れたら、まだ見送っていない場所から新しく引くこと" do
+        deck = deck_with_hands("all" => [ near_places.first.id ], "near" => [ near_places.first.id ])
+        deck.redraw("near")
+        expect(show(deck_from(deck.to_h), nil)).to contain_exactly(near_places.last.id, *far_places.map(&:id))
+      end
+    end
+
     context "引き切ったあとに場所が増えた場合" do
       before { create_list(:place, 2, group: group) }
 
       it "同じ距離感でも、増えた場所を引くこと" do
         deck = deck_from(nil)
         show(deck, nil)
-        deck.draw(nil)
+        deck.redraw(nil)
         added = create(:place, group: group)
         expect(show(deck_from(deck.to_h), nil)).to eq([ added.id ])
       end
@@ -123,9 +169,16 @@ RSpec.describe TodayDeck do
         expect(show(deck_from(nil), "far")).to match_array(scope.far.ids)
       end
 
-      it "距離感を切り替えても山札は共通で、一度出した場所は出さないこと" do
+      it "距離感を切り替えただけでは、別の距離感で出した場所も候補に残ること" do
         deck = deck_from(nil)
         show(deck, "near")
+        expect(show(deck_from(deck.to_h), nil).size).to eq(3)
+      end
+
+      it "山札は距離感をまたいで共通で、別の距離感で見送った場所は出さないこと" do
+        deck = deck_from(nil)
+        show(deck, "near")
+        deck.redraw("near")
         expect(show(deck_from(deck.to_h), nil)).to match_array(scope.far.ids)
       end
     end
@@ -134,9 +187,8 @@ RSpec.describe TodayDeck do
       before { create_list(:place, 3, group: group) }
 
       it "山札をリセットし、同じ場所をまた引けること", :aggregate_failures do
-        yesterday = deck_from(nil, on: today - 1)
-        show(yesterday, nil)
-        deck = deck_from(yesterday.to_h)
+        # 前日にすべて見送った状態
+        deck = deck_from({ "date" => (today - 1).iso8601, "seen_ids" => scope.ids, "hands" => {} })
         expect(show(deck, nil)).to match_array(scope.ids)
         expect(deck.to_h["date"]).to eq(today.iso8601)
       end
@@ -150,19 +202,42 @@ RSpec.describe TodayDeck do
   end
 
   describe "#draw" do
+    before { create_list(:place, 5, group: group) }
+
+    it "引いた手札を山札に入れないこと", :aggregate_failures do
+      deck = deck_from(nil)
+      ids = deck.draw(nil)
+      expect(deck.to_h["seen_ids"]).to eq([])
+      expect(deck.current_hand(nil)).to eq(ids)
+    end
+  end
+
+  describe "#redraw" do
     let(:deck) { deck_from(nil) }
     let!(:first) do
       create_list(:place, 5, group: group)
       deck.draw(nil)
     end
 
-    it "まだ出していない場所だけを引くこと" do
-      expect(deck.draw(nil)).to match_array(scope.ids - first)
+    it "いまの手札を山札に入れ、まだ見送っていない場所から引くこと", :aggregate_failures do
+      expect(deck.redraw(nil)).to match_array(scope.ids - first)
+      expect(deck.to_h["seen_ids"]).to match_array(first)
+    end
+
+    it "引き直した手札を、その距離感の手札として覚えること" do
+      ids = deck.redraw(nil)
+      expect(deck_from(deck.to_h).current_hand(nil)).to eq(ids)
     end
 
     it "引き切ると空を返すこと" do
-      deck.draw(nil)
-      expect(deck.draw(nil)).to eq([])
+      deck.redraw(nil)
+      expect(deck.redraw(nil)).to eq([])
+    end
+
+    it "他の距離感の手札は山札に入れないこと" do
+      deck.draw("near")
+      deck.redraw(nil)
+      expect(deck.to_h["seen_ids"]).to match_array(first)
     end
   end
 end
