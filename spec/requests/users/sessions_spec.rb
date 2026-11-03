@@ -25,7 +25,7 @@ RSpec.describe "Users::Sessions", type: :request do
       post user_session_path, params: { user: { email: "taro@example.com", password: "password123" } }
       expect(response).to redirect_to(root_path)
       follow_redirect!
-      expect(response.body).to include("ようこそ、#{user.name}さん")
+      expect(response.parsed_body.at_css("h1")&.text).to eq("今日決める")
     end
 
     it "パスワードが間違っているとログインに失敗すること", :aggregate_failures do
