@@ -64,6 +64,19 @@ jobs:
       # コードを変更したときだけ Claude が .github/scripts/prepare_test_env.sh で行う。
       # 質問だけなら準備を飛ばして早く返事できるようにするため
       # developer エージェントと同じ 4 つのチェックを通してから push させる
+      #
+      # 行コメントの位置（ファイル・行）やレビューに付いた行コメント一覧を Claude が読めるように、
+      # 読み取り専用の手段だけを許可する（Issue #68）
+      # - gh pr view / gh pr diff は書き込みオプションを持たないのでそのまま許可
+      # - gh api は -X DELETE や -f（POST になる）で書き込めてしまうため許可せず、
+      #   GET とエンドポイントを固定した .github/scripts/pr_review_comments.sh だけを許可
+      # - 「GitHub に書き込めない」のは、ここで許可した gh 系コマンドでは、という意味
+      #   （回答コメントは Claude Code Action 自身が投稿する）
+      # system prompt にはイベント名・PR 番号・レビュー ID・呼び出し元の行コメント ID を埋め込み、
+      # 回答前にまずコメントの位置を確認させる（@claude を含む行コメントが複数あっても呼び出し元を特定できるように）。
+      # 埋め込むのは数値とイベント名だけにする。comment.body / path などの文字列は、
+      # クォートを抜けて CLI 引数を注入できてしまうため絶対に埋め込まない。
+      # --append-system-prompt は 1 つの引数なので 1 行で書いている
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
         env:
@@ -73,5 +86,5 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --allowedTools "Bash(.github/scripts/prepare_test_env.sh),Bash(bundle exec rspec:*),Bash(bin/rubocop:*),Bash(bin/brakeman:*),Bash(bundle exec rails_best_practices:*),Bash(bin/rails db:test:prepare),Bash(yarn build:css)"
-            --append-system-prompt "質問への回答だけでコードを変更しない場合は、テスト環境の準備やチェックは不要。コードを変更した場合は、まず .github/scripts/prepare_test_env.sh を 1 回実行してテスト環境を準備し、コミット・push する前に bundle exec rspec / bin/rubocop / bin/brakeman --no-pager / bundle exec rails_best_practices . をすべて実行し、すべてパスしてから push すること。パスしない場合は修正を試み、それでも解決できなければ push せずに状況を PR コメントで報告すること。"
+            --allowedTools "Bash(.github/scripts/prepare_test_env.sh),Bash(bundle exec rspec:*),Bash(bin/rubocop:*),Bash(bin/brakeman:*),Bash(bundle exec rails_best_practices:*),Bash(bin/rails db:test:prepare),Bash(yarn build:css),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(.github/scripts/pr_review_comments.sh:*)"
+            --append-system-prompt "質問への回答だけでコードを変更しない場合は、テスト環境の準備やチェックは不要。コードを変更した場合は、まず .github/scripts/prepare_test_env.sh を 1 回実行してテスト環境を準備し、コミット・push する前に bundle exec rspec / bin/rubocop / bin/brakeman --no-pager / bundle exec rails_best_practices . をすべて実行し、すべてパスしてから push すること。パスしない場合は修正を試み、それでも解決できなければ push せずに状況を PR コメントで報告すること。イベント名は ${{ github.event_name }}、現在の PR 番号は ${{ github.event.pull_request.number || github.event.issue.number }}、レビュー ID は「${{ github.event.review.id }}」（pull_request_review 以外では空）、呼び出し元の行コメント ID は「${{ github.event.comment.id }}」（pull_request_review_comment 以外では意味を持たない）。行コメント取得スクリプトは必ずこのパスのまま、.github/scripts/pr_review_comments.sh で始まる形で実行すること（bash や ./ を前に付けない）。pull_request_review_comment（行コメント）で呼ばれた場合は、回答する前にまず .github/scripts/pr_review_comments.sh <PR番号> を実行し、出力の「===== comment <ID> =====」が呼び出し元の行コメント ID と一致するもののファイル・行・diff_hunk を確認してから答えること（in_reply_to があればスレッドの元コメントも参照する）。pull_request_review（レビュー全体コメント）で「コメント確認して」などと頼まれた場合は、.github/scripts/pr_review_comments.sh <PR番号> <レビューID> でそのレビューの行コメントを取得し、各コメントに触れて答えること。issue_comment（PR の会話コメント）で頼まれた場合は、gh pr view <PR番号> --comments で会話コメントを読める。PR の概要や差分は gh pr view / gh pr diff で確認できる。許可されている gh 系コマンドやスクリプトで GitHub に書き込む（コメントの投稿・編集・削除など）ことはできない（回答は通常どおり Claude Code Action のコメントで返す）。"
