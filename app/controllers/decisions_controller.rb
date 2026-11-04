@@ -10,6 +10,7 @@ class DecisionsController < ApplicationController
     deck = TodayDeck.new(session[:today], own_places)
     hand_ids = deck.current_hand(@distance)
     # 再読み込みや距離感の切り替えでは、その距離感で覚えている手札を出す（山札は進めない）。
+    # Turbo はリンクにマウスを乗せただけでこの GET を先読みするため、show で山札を進めてはいけない。
     # 手札がなければ（初回・引き切り・手札の場所がすべて削除や他の距離感で見送られた）新しく引く
     hand_ids = deck.draw(@distance) if hand_ids.empty?
     session[:today] = deck.to_h
