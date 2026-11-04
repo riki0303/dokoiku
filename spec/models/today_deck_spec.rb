@@ -65,13 +65,6 @@ RSpec.describe TodayDeck do
       Place.find(ids.first).update!(distance: :far)
       expect(deck_from(first.to_h).current_hand("near")).to eq(ids.drop(1))
     end
-
-    it "古い形のセッション（距離感ごとの手札がない当日分）はリセットすること", :aggregate_failures do
-      old = { "date" => today.iso8601, "seen_ids" => scope.ids, "hand_ids" => scope.ids.take(3), "distance" => nil }
-      deck = deck_from(old)
-      expect(deck.to_h).to eq("date" => today.iso8601, "seen_ids" => [], "hands" => {})
-      expect(show(deck, nil).size).to eq(3)
-    end
   end
 
   describe "#draw と #current_hand を組み合わせた流れ" do

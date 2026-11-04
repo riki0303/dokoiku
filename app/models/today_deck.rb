@@ -21,9 +21,8 @@ class TodayDeck
   def initialize(state, scope, today: Date.current)
     @scope = scope
     @state = state.to_h.stringify_keys
-    # 日付が変わった（または初回）なら山札を空にする。
-    # 古い形のセッション（"hands" がない）も、seen_ids に「表示しただけ」の場所を含むためリセットする
-    reset(today.iso8601) unless @state["date"] == today.iso8601 && @state["hands"].is_a?(Hash)
+    # 日付が変わった（または初回）なら山札を空にする
+    reset(today.iso8601) unless @state["date"] == today.iso8601
   end
 
   # その距離感でいま出している手札の place_id を返す（山札は進めない）。
@@ -72,7 +71,7 @@ class TodayDeck
   end
 
   def hands
-    @state["hands"]
+    @state["hands"] ||= {}
   end
 
   def hand_ids(distance)
