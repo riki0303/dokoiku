@@ -1,12 +1,20 @@
 # 「今日決める」画面の山札（DB には保存しない PORO）
-# その日に出した場所（seen_ids）と、いま出している3件（hand_ids）をセッションの Hash で受け渡しする
+# その日に「別の3件」で見送った場所（seen_ids）と、距離感ごとにいま出している手札（hands）を
+# セッションの Hash で受け渡しする
 #
 #   deck = TodayDeck.new(session[:today], policy_scope(Place))
 #   hand_ids = deck.current_hand(distance)
 #   hand_ids = deck.draw(distance) if hand_ids.empty?
 #   session[:today] = deck.to_h
+#
+# 「別の3件」では、いまの手札を見送ってから次の手札を引く
+#
+#   deck.redraw(distance)
 class TodayDeck
   HAND_SIZE = 3
+  # 「すべて」（distance が nil）の手札のキー。セッションは JSON（Cookie）を経由するため、
+  # nil をキーにすると "" に変わってしまう。距離感の値と被らない固定の文字列にする
+  ALL_KEY = "all".freeze
 
   # state: セッションに入れていた Hash（初回は nil）。キーは Cookie を経由すると文字列になるため、文字列で扱う
   # scope: 候補にする場所（現在のグループに絞ったもの）
@@ -17,23 +25,28 @@ class TodayDeck
     reset(today.iso8601) unless @state["date"] == today.iso8601
   end
 
-  # いま出している手札の place_id を返す（山札は進めない）。
-  # 手札を引いたときと同じ距離感のときだけ、まだ候補に残っているものを返す。
-  # 距離感が違う・手札が空（初回・引き切った・手札の場所がすべて削除された）なら []
+  # その距離感でいま出している手札の place_id を返す（山札は進めない）。
+  # まだ候補に残っているものだけを、手札の順序のまま返す。
+  # 削除された・他の距離感で見送った・距離感が変わった場所は外れ、補充はしない
   def current_hand(distance)
-    return [] unless @state["distance"] == distance
+    ids = hand_ids(distance)
+    return [] if ids.empty?
 
-    # セッションの id のうち、まだ候補に残っているものだけを手札とみなす
-    hand_ids & @scope.where(id: hand_ids).ids
+    ids & candidates(distance).where(id: ids).ids
   end
 
-  # まだ出していない場所から、次の手札を最大3件ランダムに引く。距離感を指定するとその距離感だけから引く
+  # まだ見送っていない場所から、その距離感の手札を最大3件ランダムに引いて覚える。
+  # 引いただけでは山札を進めない（距離感を切り替えるだけで候補が減らないようにするため）
   def draw(distance)
-    candidates = @scope.where.not(id: seen_ids)
-    candidates = candidates.where(distance: distance) if distance
-    ids = candidates.ids.sample(HAND_SIZE)
-    @state.merge!("seen_ids" => seen_ids + ids, "hand_ids" => ids, "distance" => distance)
+    ids = candidates(distance).ids.sample(HAND_SIZE)
+    hands[hand_key(distance)] = ids
     ids
+  end
+
+  # 「別の3件」。その距離感でいま出している手札を見送り（山札を進め）、次の手札を引く
+  def redraw(distance)
+    @state["seen_ids"] = seen_ids | current_hand(distance)
+    draw(distance)
   end
 
   # セッションに書き戻すための Hash
@@ -44,14 +57,28 @@ class TodayDeck
   private
 
   def reset(date)
-    @state = { "date" => date, "seen_ids" => [], "hand_ids" => [], "distance" => nil }
+    @state = { "date" => date, "seen_ids" => [], "hands" => {} }
+  end
+
+  # まだ見送っていない場所。距離感を指定するとその距離感だけに絞る
+  def candidates(distance)
+    scope = @scope.where.not(id: seen_ids)
+    distance ? scope.where(distance: distance) : scope
   end
 
   def seen_ids
     Array(@state["seen_ids"])
   end
 
-  def hand_ids
-    Array(@state["hand_ids"])
+  def hands
+    @state["hands"] ||= {}
+  end
+
+  def hand_ids(distance)
+    Array(hands[hand_key(distance)])
+  end
+
+  def hand_key(distance)
+    distance || ALL_KEY
   end
 end

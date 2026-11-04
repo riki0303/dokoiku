@@ -8,6 +8,12 @@ RSpec.describe "Decisions", type: :request do
     response.parsed_body.css(".card-title").map(&:text)
   end
 
+  # 距離感を選んで今日決める画面を開き、出ている場所の名前を返す。distance が nil なら「すべて」
+  def shown_names_for(distance)
+    get root_path, params: { distance: distance }.compact
+    shown_names
+  end
+
   describe "GET /" do
     context "未ログインの場合" do
       it "ログインページにリダイレクトすること" do
@@ -167,10 +173,30 @@ RSpec.describe "Decisions", type: :request do
         end
       end
 
-      it "距離感を切り替えても山札は共通で、一度出した場所は出さないこと" do
-        get root_path, params: { distance: "near" }
-        get root_path
-        expect(shown_names).to match_array(%w[江ノ島 京都])
+      it "距離感を何度切り替えても、山札を減らさず各距離感で1周目と同じ手札を表示すること", :aggregate_failures do
+        laps = Array.new(3) { [ nil, "near", "day_trip", "far" ].map { |distance| shown_names_for(distance) } }
+        expect(laps.first).to all(be_present)
+        expect(laps).to all(eq(laps.first))
+      end
+
+      it "「すべて → 近場 → すべて」と切り替えると、同じ手札に戻ること" do
+        first = shown_names_for(nil)
+        shown_names_for("near")
+        expect(shown_names_for(nil)).to eq(first)
+      end
+
+      it "近場で「別の3件」を押したあと「すべて」に戻ると、見送った場所だけが外れた手札を表示すること" do
+        first = shown_names_for(nil)
+        shown_names_for("near")
+        post redraw_decision_path, params: { distance: "near" }
+        expect(shown_names_for(nil)).to eq(first - %w[公園])
+      end
+
+      it "まだ手札のない距離感で「別の3件」を押しても、何も見送らず他の距離感の手札を変えないこと", :aggregate_failures do
+        first = shown_names_for(nil)
+        post redraw_decision_path, params: { distance: "far" }
+        expect(shown_names_for("far")).to eq(%w[京都])
+        expect(shown_names_for(nil)).to eq(first)
       end
 
       it "選んだ距離感に場所がなければ「今日はもう候補がありません」を表示すること" do
