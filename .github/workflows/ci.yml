@@ -33,8 +33,9 @@ jobs:
         with:
           bundler-cache: true
 
+      # 深刻度が High / Critical / Unknown（深刻度なし）と安全でない gem source だけで失敗させる。Low / Medium は表示しない
       - name: Scan for known security vulnerabilities in gems used
-        run: bin/bundler-audit
+        run: bin/bundler-audit-gate
 
   importmap_audit:
     runs-on: ubuntu-latest
@@ -51,8 +52,9 @@ jobs:
         with:
           bundler-cache: true
 
+      # 深刻度が High / Critical / Unknown（深刻度なし）のときだけ失敗させる。Low / Moderate は表示しない
       - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: bin/importmap audit
+        run: bin/importmap-audit-gate
 
   rubocop:
     runs-on: ubuntu-latest
