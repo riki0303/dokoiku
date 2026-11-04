@@ -3,6 +3,7 @@ ja:
     models:
       user: ユーザー
       place: 場所
+      visit: 訪問記録
     attributes:
       user:
         name: 名前
@@ -19,3 +20,7 @@ ja:
         near: 近場
         day_trip: 日帰り
         far: 遠出
+      visit:
+        place: 場所
+        visited_on: 訪問日
+        want_again: また行きたいか

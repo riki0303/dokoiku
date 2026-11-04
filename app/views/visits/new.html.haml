@@ -1,0 +1,16 @@
+- content_for :title, "訪問を記録する"
+.row.justify-content-center
+  .col-md-6.col-lg-5
+    %h1.h3.mb-2 訪問を記録する
+    %p.fs-5.fw-bold.mb-4= @place.name
+    = simple_form_for([ @place, @visit ]) do |f|
+      = render "shared/error_messages", model: @visit
+      -# 明日以降は選べないよう、ブラウザの日付入力に上限を付ける（サーバー側でも検証する）
+      = f.input :visited_on, as: :date, html5: true, input_html: { max: Date.current }
+      -# 初期値は付けず、どちらかを選ばせる
+      = f.input :want_again,
+        as: :radio_buttons,
+        collection: want_again_options
+      = f.button :submit, "記録する", class: "btn-primary w-100"
+    .text-center.mt-3
+      = link_to "一覧に戻る", places_path

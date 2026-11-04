@@ -1,0 +1,23 @@
+- content_for :title, "訪問済み"
+.d-flex.justify-content-between.align-items-center.mb-3
+  %h1.h3.mb-0 訪問済み
+  = link_to "ストック一覧", places_path, class: "btn btn-outline-primary btn-sm"
+-# load してから any? を呼び、件数確認と一覧表示の問い合わせを1回にまとめる
+- if @visits.load.any?
+  %ul.list-group
+    - @visits.each do |visit|
+      %li.list-group-item
+        .d-flex.justify-content-between.align-items-start.gap-2
+          .fw-bold= visit.place_name
+          .d-flex.align-items-center.gap-1.flex-shrink-0
+            %span.badge.text-bg-secondary= distance_label(visit.place_distance)
+            = button_to "取り消す", visit_path(visit),
+              method: :delete,
+              class: "btn btn-link btn-sm py-0 text-danger",
+              form: { data: { turbo_confirm: "#{visit.place_name}の訪問記録を取り消しますか？" } }
+        .text-body-secondary= visit.place_note
+        .small.text-body-secondary.mt-1
+          %span.visited-on #{Visit.human_attribute_name(:visited_on)}：#{l(visit.visited_on)}
+          %span.want-again.ms-3 #{Visit.human_attribute_name(:want_again)}：#{want_again_label(visit.want_again)}
+- else
+  %p.text-body-secondary まだ訪問した場所はありません

@@ -261,6 +261,50 @@ RSpec.describe "Decisions", type: :request do
       end
     end
 
+    context "ログイン済みで訪問を記録した場所がある場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "もう行かない場所"), want_again: false)
+        create(:visit, place: create(:place, group: user.group, name: "また行きたい場所"), want_again: true)
+        create(:place, group: user.group, name: "まだ行っていない場所")
+        sign_in user
+      end
+
+      it "消化済み（いいえ）の場所を候補に出さず、「はい」の場所は出すこと" do
+        get root_path
+        expect(shown_names).to contain_exactly("また行きたい場所", "まだ行っていない場所")
+      end
+
+      it "手札を出したあとに消化した場所を表示しないこと" do
+        get root_path
+        create(:visit, place: Place.find_by!(name: "また行きたい場所"), want_again: false)
+        get root_path
+        expect(shown_names).to eq(%w[まだ行っていない場所])
+      end
+
+      it "「別の3件」では消化済みの場所を引かないこと", :aggregate_failures do
+        get root_path
+        post redraw_decision_path
+        follow_redirect!
+        expect(shown_names).to be_empty
+        expect(response.body).to include("今日はもう候補がありません")
+      end
+    end
+
+    context "ログイン済みでストックをすべて消化した場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "江ノ島"), want_again: false)
+        sign_in user
+        get root_path
+      end
+
+      it "「今日はもう候補がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+        expect(shown_names).to be_empty
+        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).not_to include("まだ場所がありません")
+        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+      end
+    end
+
     context "ログイン済みで場所が1件もない場合" do
       before do
         create(:place, group: create(:user).group)
