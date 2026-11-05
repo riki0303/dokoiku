@@ -46,6 +46,17 @@ RSpec.describe "Visits", type: :request do
         expect(radios.select { |radio| radio["checked"] }).to be_empty
       end
 
+      it "訪問日の入力とまた行きたいかのラジオに required を付けること", :aggregate_failures do
+        expect(html.at_css("input[name='visit[visited_on]']")["required"]).to eq("required")
+        radios = html.css("input[type=radio][name='visit[want_again]']")
+        expect(radios.map { |radio| radio["required"] }).to eq(%w[required required])
+      end
+
+      it "訪問日とまた行きたいかのラベルに必須バッジを表示すること" do
+        labels = html.css("main form label, main form legend").select { |label| label.at_css(".badge.text-bg-danger") }
+        expect(labels.map { |label| label.text.sub("必須", "").strip }).to eq(%w[訪問日 また行きたいか])
+      end
+
       it "送信ボタンと一覧に戻るリンクを表示すること", :aggregate_failures do
         expect(html.at_css("input[type=submit]")["value"]).to eq("記録する")
         expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("一覧に戻る")
