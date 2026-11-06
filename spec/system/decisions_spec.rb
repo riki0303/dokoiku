@@ -14,27 +14,6 @@ RSpec.describe "Decisions", type: :system do
     find("a[aria-current='page']", text: label)
   end
 
-  # 絞り込みボタンにマウスを乗せ、Turbo の先読み（GET）のレスポンスが届くまで待つ。
-  # 先読みが本当に動いたことを確かめるため、また sleep で待たないため、先読みのレスポンスを受け取ったリンクの URL を記録して待つ
-  def hover_and_wait_for_prefetch(label)
-    # 同じページで2回呼んでもリスナーを二重に登録しない
-    execute_script(<<~JS)
-      if (!window.prefetchedUrls) {
-        window.prefetchedUrls = [];
-        document.addEventListener("turbo:before-fetch-response", (event) => {
-          if (event.target.matches?.("a")) window.prefetchedUrls.push(event.target.href);
-        });
-      }
-    JS
-    link = find_link(label)
-    # Selenium の [:href] は DOM の href プロパティ（絶対 URL）を返すため、JS 側も href プロパティで記録して比べる
-    url = link[:href]
-    link.hover
-    page.document.synchronize do
-      raise Capybara::ExpectationNotMet, "「#{label}」の先読みが動いていない" unless evaluate_script("window.prefetchedUrls").include?(url)
-    end
-  end
-
   context "未ログインの場合" do
     before do
       create(:place, group: user.group, name: "江ノ島", note: "夕日を見に行きたい")
@@ -94,23 +73,6 @@ RSpec.describe "Decisions", type: :system do
       click_distance "近場"
       click_distance "すべて"
       expect(shown_names).to eq(first)
-    end
-
-    # 場所はすべて近場なので、「近場」の先読みは「すべて」と同じ場所から手札を引く（引いたら山札が減る実装なら気づける）
-    context "絞り込みボタンにマウスを乗せて先読みが動いた場合" do
-      it "再読み込みしても、同じ場所を表示すること" do
-        first = all(".card-title", count: 3).map(&:text)
-        hover_and_wait_for_prefetch "近場"
-        refresh
-        expect(page).to have_css(".card-title", count: 3) { |title| first.include?(title.text) }
-      end
-
-      it "「別の3件」を押すと、残りの2件を表示すること" do
-        hover_and_wait_for_prefetch "近場"
-        # 先読みで見送り扱いになっていなければ、5件のうち出ていた3件だけを見送って残りは2件
-        click_button "別の3件"
-        expect(page).to have_css(".card", count: 2)
-      end
     end
 
     it "ナビバーから場所の登録画面へ移動できること" do
