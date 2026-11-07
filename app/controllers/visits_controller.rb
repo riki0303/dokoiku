@@ -27,7 +27,6 @@ class VisitsController < ApplicationController
     visit = policy_scope(Visit).find(params[:id])
     authorize visit
     visit.destroy!
-    # Turbo が DELETE のあとに一覧を GET で開き直せるよう、303 See Other でリダイレクトする
     redirect_to visits_path, notice: "#{visit.place_name}の訪問記録を取り消しました", status: :see_other
   end
 
