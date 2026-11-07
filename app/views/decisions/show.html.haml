@@ -24,7 +24,7 @@
               %span= registered_ago(place)
             = link_to "これにする", google_maps_search_url(place),
               class: "btn btn-primary mt-auto", target: "_blank", rel: "noopener noreferrer"
-  = button_to "別の3件", redraw_decision_path, params: { distance: @distance }.compact,
+  = button_to "別の3件", redraw_decision_path, params: { distance: @distance },
     class: "btn btn-outline-secondary"
 - else
   %p.text-body-secondary 場所がありません
