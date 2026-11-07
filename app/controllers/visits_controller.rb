@@ -31,19 +31,19 @@ class VisitsController < ApplicationController
 
   private
 
-  # 消化済みの場所は in_stock で見つからない扱い（404）にする。グループのチェックは authorize で行う
+  # 消化済みの場所は wanted に含まれないため見つからない扱い（404）にする。グループのチェックは authorize で行う
   def set_place
-    @place = Place.in_stock.find(params[:place_id])
+    @place = Place.wanted.find(params[:place_id])
   end
 
   def visit_params
     params.expect(visit: %i[visited_on want_again])
   end
 
-  # 「いいえ」ならストックから外れ、「はい」ならストックに残ることを伝える
+  # 「いいえ」なら行きたい場所から外れ、「はい」なら行きたい場所に残ることを伝える
   def created_message
     if @visit.want_again
-      "#{@place.name}の訪問を記録しました（ストックに残ります）"
+      "#{@place.name}の訪問を記録しました（行きたい場所に残ります）"
     else
       "#{@place.name}を訪問済みにしました"
     end

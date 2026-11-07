@@ -22,13 +22,13 @@ RSpec.describe "Visits", type: :system do
       expect(Visit.count).to eq(1)
     end
 
-    it "確認ダイアログで OK すると、完了メッセージ付きで訪問済み一覧に戻り、ストックに戻ること", :aggregate_failures do
+    it "確認ダイアログで OK すると、完了メッセージ付きで訪問済み一覧に戻り、行きたい場所に戻ること", :aggregate_failures do
       accept_confirm("江ノ島の訪問記録を取り消しますか？") { click_button "取り消す" }
 
       expect(page).to have_content("江ノ島の訪問記録を取り消しました")
       expect(page).to have_current_path(visits_path)
       expect(page).to have_content("まだ訪問した場所はありません")
-      expect(Place.in_stock.pluck(:name)).to eq(%w[江ノ島])
+      expect(Place.wanted.pluck(:name)).to eq(%w[江ノ島])
     end
   end
 end

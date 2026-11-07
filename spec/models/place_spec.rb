@@ -97,7 +97,7 @@ RSpec.describe Place, type: :model do
     end
   end
 
-  describe ".in_stock" do
+  describe ".wanted" do
     let!(:not_visited) { create(:place, name: "まだ行っていない") }
     let!(:want_again) { create(:place, name: "また行きたい") }
     let!(:done) { create(:place, name: "もう行かない") }
@@ -111,11 +111,11 @@ RSpec.describe Place, type: :model do
     end
 
     it "訪問記録がない場所と「はい」の記録しかない場所を含むこと" do
-      expect(described_class.in_stock).to contain_exactly(not_visited, want_again)
+      expect(described_class.wanted).to contain_exactly(not_visited, want_again)
     end
 
     it "「いいえ」の記録が1件でもある場所を含まないこと" do
-      expect(described_class.in_stock).not_to include(done, changed_mind)
+      expect(described_class.wanted).not_to include(done, changed_mind)
     end
   end
 end

@@ -1,6 +1,6 @@
-- content_for :title, "ストック一覧"
+- content_for :title, "場所一覧"
 .d-flex.justify-content-between.align-items-center.mb-3
-  %h1.h3.mb-0 ストック一覧
+  %h1.h3.mb-0 場所一覧
   - if @any_places
     = link_to "場所を登録する", new_place_path, class: "btn btn-primary btn-sm"
 - if @any_places
@@ -28,6 +28,6 @@
 - else
   %p.text-body-secondary 場所がありません
   = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
--# ストックが0件でも（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
+-# 行きたい場所が0件でも（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
 .text-center.mt-4
   = link_to "訪問済みの場所を見る", visits_path
