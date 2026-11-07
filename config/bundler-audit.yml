@@ -1,5 +1,7 @@
 # Audit all gems listed in the Gemfile for known security problems by running bin/bundler-audit.
 # CVEs that are not relevant to the application can be enumerated on the ignore list below.
+# CI runs `bin/bundler-audit check --format json` and uses jq to fail only on insecure sources and High / Critical / unknown severity advisories.
+# Review such an advisory, and if it does not affect the application, add it to the ignore list below.
 
 ignore:
   - CVE-THAT-DOES-NOT-APPLY
