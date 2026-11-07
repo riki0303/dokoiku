@@ -3,9 +3,7 @@ class DecisionsController < ApplicationController
   def show
     authorize :decision, :show?
     @distance = distance_param
-    # 候補はストックに残っている場所だけ（消化済みの場所は出さない）
     stock = policy_scope(Place).in_stock
-    # ストックが1件もない（すべて消化済みも含む）ときは、距離感の絞り込みボタンを出さないため
     @any_places = stock.exists?
 
     deck = TodayDeck.new(session[:today], stock)
