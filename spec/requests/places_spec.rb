@@ -169,17 +169,16 @@ RSpec.describe "Places", type: :request do
         sign_in user
       end
 
-      it "距離感入りの0件メッセージを表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
+      it "「場所がありません」を表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
         get places_path, params: { q: { distance_eq: "far" } }
-        expect(response.body).to include("遠出の場所はありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.css("a[aria-current='page']").map(&:text)).to eq([ "遠出" ])
-        expect(response.body).not_to include("場所がありません")
       end
 
-      it "不正な値ならエラーにせず0件メッセージを表示すること", :aggregate_failures do
+      it "不正な値ならエラーにせず「場所がありません」を表示すること", :aggregate_failures do
         get places_path, params: { q: { distance_eq: "xxx" } }
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("該当する場所はありません")
+        expect(response.body).to include("場所がありません")
       end
     end
 
