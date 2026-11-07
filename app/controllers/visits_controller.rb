@@ -32,11 +32,9 @@ class VisitsController < ApplicationController
 
   private
 
-  # 記録できるのは自分のグループのストックに残っている場所だけ。
-  # 他のグループの場所や消化済みの場所の id を指定すると RecordNotFound（404）になる。
-  # 消化済みの場所への記録は、ポリシーではなくここ（in_stock.find）で見つからない扱いにする
+  # 消化済みの場所は in_stock で見つからない扱い（404）にする。グループのチェックは authorize で行う
   def set_place
-    @place = policy_scope(Place).in_stock.find(params[:place_id])
+    @place = Place.in_stock.find(params[:place_id])
   end
 
   def visit_params

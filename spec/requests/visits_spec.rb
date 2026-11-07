@@ -68,9 +68,10 @@ RSpec.describe "Visits", type: :request do
 
       before { sign_in user }
 
-      it "404 を返すこと" do
+      it "権限がない旨を表示してリダイレクトすること", :aggregate_failures do
         get new_place_visit_path(other_place)
-        expect(response).to have_http_status(:not_found)
+        expect(response).to redirect_to(root_path)
+        expect(flash[:alert]).to eq("この操作を行う権限がありません。")
       end
     end
 
@@ -211,9 +212,10 @@ RSpec.describe "Visits", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、記録しないこと", :aggregate_failures do
+      it "記録せず、権限がない旨を表示してリダイレクトすること", :aggregate_failures do
         expect { post place_visits_path(other_place), params: valid_params }.not_to change(Visit, :count)
-        expect(response).to have_http_status(:not_found)
+        expect(response).to redirect_to(root_path)
+        expect(flash[:alert]).to eq("この操作を行う権限がありません。")
       end
     end
 
