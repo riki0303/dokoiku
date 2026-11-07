@@ -147,8 +147,8 @@ RSpec.describe "Places", type: :request do
         get places_path
       end
 
-      it "場所がない場合と同じ「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
-        expect(response.body).to include("まだ場所がありません")
+      it "場所がない場合と同じ「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+        expect(response.body).to include("場所がありません")
         expect(response.body).not_to include("江ノ島")
         expect(response.parsed_body.css("main a[href='#{new_place_path}']").map(&:text)).to eq([ "場所を登録する" ])
       end
@@ -173,7 +173,7 @@ RSpec.describe "Places", type: :request do
         get places_path, params: { q: { distance_eq: "far" } }
         expect(response.body).to include("遠出の場所はありません")
         expect(response.parsed_body.css("a[aria-current='page']").map(&:text)).to eq([ "遠出" ])
-        expect(response.body).not_to include("まだ場所がありません")
+        expect(response.body).not_to include("場所がありません")
       end
 
       it "不正な値ならエラーにせず0件メッセージを表示すること", :aggregate_failures do
@@ -206,7 +206,7 @@ RSpec.describe "Places", type: :request do
 
       it "案内文と登録画面へのリンクを表示すること", :aggregate_failures do
         get places_path
-        expect(response.body).to include("まだ場所がありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
