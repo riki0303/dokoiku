@@ -33,8 +33,16 @@ jobs:
         with:
           bundler-cache: true
 
+      # 失敗させるのは、安全でない gem source（insecure_source）と、深刻度が High / Critical / 不明（null や想定外の値）の脆弱性。
+      # 深刻度が None / Low / Medium の脆弱性は無視して表示しない。JSON ができなかったとき（DB の取得失敗など）は jq が失敗する
       - name: Scan for known security vulnerabilities in gems used
-        run: bin/bundler-audit
+        run: |
+          bin/bundler-audit check --format json --output tmp/bundler-audit.json || true
+          jq -e '
+            [.results[] | select(.type != "unpatched_gem" or (.advisory.criticality | IN("none", "low", "medium") | not))]
+            | if . == [] then "No High / Critical / unknown severity advisories found."
+              else (., ("High / Critical / unknown severity advisories found.\n" | halt_error(1))) end
+          ' tmp/bundler-audit.json
 
   importmap_audit:
     runs-on: ubuntu-latest
