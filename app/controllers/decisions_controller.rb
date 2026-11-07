@@ -5,7 +5,7 @@ class DecisionsController < ApplicationController
     @distance = distance_param
     # 候補はストックに残っている場所だけ（消化済みの場所は出さない）
     stock = policy_scope(Place).in_stock
-    # 0件のとき「場所がない（すべて消化済みも含む）」のか「今日の候補を引き切った」のかを出し分けるため
+    # ストックが1件もない（すべて消化済みも含む）ときは、距離感の絞り込みボタンを出さないため
     @any_places = stock.exists?
 
     deck = TodayDeck.new(session[:today], stock)
