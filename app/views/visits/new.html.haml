@@ -9,10 +9,7 @@
       = f.input :visited_on, as: :date, html5: true, input_html: { max: Date.current }
       -# 初期値は付けず、どちらかを選ばせる。
       -# 未選択は inclusion で弾いており Simple Form が必須と判定しないため、必須バッジと required 属性を明示する
-      = f.input :want_again,
-        as: :radio_buttons,
-        collection: want_again_options,
-        required: true
+      = f.input :want_again, as: :radio_buttons, required: true
       = f.button :submit, "記録する", class: "btn-primary w-100"
     .text-center.mt-3
       = link_to "一覧に戻る", places_path
