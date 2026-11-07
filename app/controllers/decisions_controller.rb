@@ -3,11 +3,10 @@ class DecisionsController < ApplicationController
   def show
     authorize :decision, :show?
     @distance = distance_param
-    # 0件のとき「まだ場所がない」のか「今日の候補を引き切った（またはすべて消化した）」のかを出し分けるため、
-    # ここだけは消化済みの場所も数える
-    @any_places = policy_scope(Place).exists?
     # 候補はストックに残っている場所だけ（消化済みの場所は出さない）
     stock = policy_scope(Place).in_stock
+    # 0件のとき「場所がない（すべて消化済みも含む）」のか「今日の候補を引き切った」のかを出し分けるため
+    @any_places = stock.exists?
 
     deck = TodayDeck.new(session[:today], stock)
     hand_ids = deck.current_hand(@distance)

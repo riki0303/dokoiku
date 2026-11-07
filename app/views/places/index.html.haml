@@ -1,9 +1,9 @@
 - content_for :title, "ストック一覧"
 .d-flex.justify-content-between.align-items-center.mb-3
   %h1.h3.mb-0 ストック一覧
-  - if @any_stock
+  - if @any_places
     = link_to "場所を登録する", new_place_path, class: "btn btn-primary btn-sm"
-- if @any_stock
+- if @any_places
   %nav.d-flex.flex-wrap.gap-2.mb-3{ aria: { label: "距離感で絞り込む" } }
     -# 選択中のボタンは塗りつぶしにし、aria-current を付ける
     - [ [ "すべて", nil ], *distance_options ].each do |label, distance|
@@ -28,14 +28,9 @@
     %p.text-body-secondary #{distance_label(@q.distance_eq)}の場所はありません
   - else
     %p.text-body-secondary 該当する場所はありません
-- elsif @any_places
-  -# 場所はあるがすべて消化済みのときも、絞り込みボタンと見出し横の登録ボタンは出さず、案内文と登録リンクだけにする
-  %p.text-body-secondary ストックはすべて消化しました
-  = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
 - else
   %p.text-body-secondary まだ場所がありません
   = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
--# 場所が1件でもあれば（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
-- if @any_places
-  .text-center.mt-4
-    = link_to "訪問済みの場所を見る", visits_path
+-# ストックが0件でも（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
+.text-center.mt-4
+  = link_to "訪問済みの場所を見る", visits_path

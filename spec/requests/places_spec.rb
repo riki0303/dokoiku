@@ -147,9 +147,9 @@ RSpec.describe "Places", type: :request do
         get places_path
       end
 
-      it "「ストックはすべて消化しました」と登録画面へのリンクを表示すること", :aggregate_failures do
-        expect(response.body).to include("ストックはすべて消化しました")
-        expect(response.body).not_to include("まだ場所がありません", "江ノ島")
+      it "場所がない場合と同じ「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+        expect(response.body).to include("まだ場所がありません")
+        expect(response.body).not_to include("江ノ島")
         expect(response.parsed_body.css("main a[href='#{new_place_path}']").map(&:text)).to eq([ "場所を登録する" ])
       end
 
@@ -213,11 +213,6 @@ RSpec.describe "Places", type: :request do
       it "絞り込みボタンを表示しないこと" do
         get places_path
         expect(response.parsed_body.css("a[href^='#{places_path}?']")).to be_empty
-      end
-
-      it "「ストックはすべて消化しました」を表示しないこと" do
-        get places_path
-        expect(response.body).not_to include("ストックはすべて消化しました")
       end
     end
   end

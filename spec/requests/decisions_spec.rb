@@ -297,10 +297,10 @@ RSpec.describe "Decisions", type: :request do
         get root_path
       end
 
-      it "「今日はもう候補がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "場所がない場合と同じ「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
-        expect(response.body).to include("今日はもう候補がありません")
-        expect(response.body).not_to include("まだ場所がありません")
+        expect(response.body).to include("まだ場所がありません")
+        expect(response.body).not_to include("今日はもう候補がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
     end
