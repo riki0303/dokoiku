@@ -66,9 +66,9 @@ RSpec.describe "Decisions", type: :request do
         get root_path
       end
 
-      it "「今日はもう候補がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("まだ場所がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
@@ -199,11 +199,11 @@ RSpec.describe "Decisions", type: :request do
         expect(shown_names_for(nil)).to eq(first)
       end
 
-      it "選んだ距離感に場所がなければ「今日はもう候補がありません」を表示すること" do
+      it "選んだ距離感に場所がなければ「まだ場所がありません」を表示すること" do
         get root_path, params: { distance: "far" }
         post redraw_decision_path, params: { distance: "far" }
         follow_redirect!
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("まだ場所がありません")
       end
 
       it "「別の3件」は選んでいる距離感を保ったままリダイレクトすること" do
@@ -230,7 +230,7 @@ RSpec.describe "Decisions", type: :request do
 
       it "同じ日のうちは候補を出さないこと" do
         travel_to(Time.zone.local(2026, 11, 1, 23, 55)) { get root_path }
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("まだ場所がありません")
       end
 
       it "日本時間で日付が変わると山札をリセットし、前日に出した場所をまた表示すること" do
@@ -286,7 +286,7 @@ RSpec.describe "Decisions", type: :request do
         post redraw_decision_path
         follow_redirect!
         expect(shown_names).to be_empty
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("まだ場所がありません")
       end
     end
 
@@ -300,7 +300,6 @@ RSpec.describe "Decisions", type: :request do
       it "場所がない場合と同じ「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
         expect(response.body).to include("まだ場所がありません")
-        expect(response.body).not_to include("今日はもう候補がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
     end

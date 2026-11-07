@@ -64,7 +64,7 @@ RSpec.describe "Decisions", type: :system do
       # 2回目を押す前に、1回目の画面の入れ替わりを待つ
       all(".card", count: 2)
       click_button "別の3件"
-      expect(page).to have_content("今日はもう候補がありません")
+      expect(page).to have_content("まだ場所がありません")
       expect(page).to have_link("場所を登録する", href: new_place_path)
     end
 

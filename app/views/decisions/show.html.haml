@@ -27,7 +27,7 @@
     = button_to "別の3件", redraw_decision_path, params: { distance: @distance }.compact,
       class: "btn btn-outline-secondary"
   - else
-    %p.text-body-secondary 今日はもう候補がありません
+    %p.text-body-secondary まだ場所がありません
     = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
 - else
   %p.text-body-secondary まだ場所がありません
