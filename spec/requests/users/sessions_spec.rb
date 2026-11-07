@@ -10,6 +10,11 @@ RSpec.describe "Users::Sessions", type: :request do
       expect(response.body).not_to include("パスワードを忘れましたか？")
     end
 
+    it "未ログインのナビバーに「今日どこ行く？」と場所一覧へのリンクを表示しないこと" do
+      get new_user_session_path
+      expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("今日どこ行く？", "場所一覧")
+    end
+
     # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する
     it "novalidate を付けず、メールアドレスとパスワードに required を付けること", :aggregate_failures do
       get new_user_session_path
@@ -25,7 +30,7 @@ RSpec.describe "Users::Sessions", type: :request do
       post user_session_path, params: { user: { email: "taro@example.com", password: "password123" } }
       expect(response).to redirect_to(root_path)
       follow_redirect!
-      expect(response.parsed_body.at_css("h1")&.text).to eq("今日決める")
+      expect(response.parsed_body.at_css("h1")&.text).to eq("今日どこ行く？")
     end
 
     it "パスワードが間違っているとログインに失敗すること", :aggregate_failures do
