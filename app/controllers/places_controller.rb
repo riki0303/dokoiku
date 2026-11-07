@@ -43,9 +43,9 @@ class PlacesController < ApplicationController
 
   private
 
-  # 自分のグループの場所から探すため、他のグループの id を指定すると RecordNotFound（404）になる
+  # 他のグループの場所は authorize（PlacePolicy）で拒否する（ApplicationController#user_not_authorized で 404 を返す）
   def set_place
-    @place = policy_scope(Place).find(params[:id])
+    @place = Place.find(params[:id])
     authorize @place
   end
 
