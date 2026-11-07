@@ -23,8 +23,7 @@ class VisitsController < ApplicationController
   end
 
   def destroy
-    # 自分のグループの記録から探すため、他のグループの id を指定すると RecordNotFound（404）になる
-    visit = policy_scope(Visit).find(params[:id])
+    visit = Visit.find(params[:id])
     authorize visit
     visit.destroy!
     redirect_to visits_path, notice: "#{visit.place_name}の訪問記録を取り消しました", status: :see_other
