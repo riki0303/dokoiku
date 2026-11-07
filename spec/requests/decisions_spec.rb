@@ -125,9 +125,9 @@ RSpec.describe "Decisions", type: :request do
         expect(response.parsed_body.at_css("form[action='#{redraw_decision_path}'][method='post'] button")&.text).to eq("別の3件")
       end
 
-      it "Turbo のホバー先読みを止める meta を出すこと" do
+      it "Turbo のホバー先読みを止める meta を出さないこと" do
         get root_path
-        expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")&.[]("content")).to eq("false")
+        expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")).to be_nil
       end
 
       it "ナビバーに場所の登録・ストック一覧へのリンクを表示すること" do
