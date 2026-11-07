@@ -4,9 +4,7 @@ class PlacesController < ApplicationController
   def index
     authorize Place
     stock = policy_scope(Place).in_stock
-    # ストックが1件もない（すべて消化済みも含む）ときは、距離感の絞り込みボタンと見出し横の登録ボタンを出さないため
     @any_places = stock.exists?
-    # 自分のグループのストックに絞ったあとに ransack をかけるため、q に何を送っても他グループや消化済みの場所は出ない
     @q = stock.ransack(search_params)
     @places = @q.result.order(created_at: :desc)
   end
