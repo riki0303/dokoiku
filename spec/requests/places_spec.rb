@@ -405,9 +405,11 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返すこと" do
+      it "404 を返し、public/404.html を表示して flash を出さないこと", :aggregate_failures do
         get edit_place_path(other_place)
         expect(response).to have_http_status(:not_found)
+        expect(response.body).to eq(Rails.public_path.join("404.html").read)
+        expect(flash[:alert]).to be_nil
       end
     end
   end
@@ -504,10 +506,12 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を更新しないこと", :aggregate_failures do
+      it "404 を返し、場所を更新せず、public/404.html を表示して flash を出さないこと", :aggregate_failures do
         patch place_path(other_place), params: update_params
         expect(response).to have_http_status(:not_found)
         expect(other_place.reload.name).to eq("他人の場所")
+        expect(response.body).to eq(Rails.public_path.join("404.html").read)
+        expect(flash[:alert]).to be_nil
       end
     end
   end
@@ -550,9 +554,11 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を削除しないこと", :aggregate_failures do
+      it "404 を返し、場所を削除せず、public/404.html を表示して flash を出さないこと", :aggregate_failures do
         expect { delete place_path(other_place) }.not_to change(Place, :count)
         expect(response).to have_http_status(:not_found)
+        expect(response.body).to eq(Rails.public_path.join("404.html").read)
+        expect(flash[:alert]).to be_nil
       end
     end
   end

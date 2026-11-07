@@ -34,8 +34,9 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # 認可エラー時は、そのデータが存在するかどうかを知られないよう 404 を返す（本番環境では、存在しない ID を指定したときと同じ見え方になる）。
+  # raise ActiveRecord::RecordNotFound だと development ではデバッグ画面になり環境で見え方が変わるため、public/404.html を直接返す
   def user_not_authorized
-    flash[:alert] = "この操作を行う権限がありません。"
-    redirect_back_or_to root_path, status: :see_other
+    render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
   end
 end
