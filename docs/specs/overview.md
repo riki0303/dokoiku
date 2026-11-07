@@ -254,7 +254,8 @@ UI に「30分以内」「10km」などの時間・距離の数値表記を出�
 - 認証は Devise を使う
 - 一覧の絞り込みは ransack を使う。URL から検索できる項目はモデルの許可リスト（`ransackable_attributes` など）で絞る
 - 外部 API への依存はゼロ
-- 環境変数に入れるべき秘密情報は現時点で存在しない
+- 秘密情報は `RAILS_MASTER_KEY` のみ。リポジトリにはコミットせず、Render の環境変数で管理する（`DATABASE_URL` は Render が DB から自動で設定する）
+- ホスティングは Render（Web + Postgres）。手順は [docs/deploy.md](../deploy.md)
 
 ---
 
