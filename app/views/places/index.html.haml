@@ -12,21 +12,22 @@
         places_path(distance ? { q: { distance_eq: distance } } : {}),
         class: [ "btn", selected ? "btn-primary" : "btn-outline-primary" ],
         aria: { current: selected ? "page" : nil }
-  -# load してから any? を呼び、件数確認と一覧表示の問い合わせを1回にまとめる
-  - if @places.load.any?
-    %ul.list-group
-      - @places.each do |place|
-        %li.list-group-item
-          .d-flex.justify-content-between.align-items-start.gap-2
-            .fw-bold= place.name
-            .d-flex.align-items-center.gap-1.flex-shrink-0
-              %span.badge.text-bg-secondary= distance_label(place.distance)
-              = link_to "編集", edit_place_path(place), class: "btn btn-link btn-sm py-0"
-          .text-body-secondary= place.note
-  - elsif Place.distances.key?(@q.distance_eq.to_s)
-    %p.text-body-secondary #{distance_label(@q.distance_eq)}の場所はありません
-  - else
-    %p.text-body-secondary 該当する場所はありません
+-# load してから any? を呼び、件数確認と一覧表示の問い合わせを1回にまとめる
+-# 0件の理由（登録なし・すべて消化・絞り込んだ結果だけ0件・不正な距離感）によらず、else で同じ案内を出す
+- if @any_places && @places.load.any?
+  %ul.list-group
+    - @places.each do |place|
+      %li.list-group-item
+        .d-flex.justify-content-between.align-items-start.gap-2
+          .fw-bold= place.name
+          .d-flex.align-items-center.gap-1.flex-shrink-0
+            %span.badge.text-bg-secondary= distance_label(place.distance)
+            = link_to "行った", new_place_visit_path(place), class: "btn btn-link btn-sm py-0"
+            = link_to "編集", edit_place_path(place), class: "btn btn-link btn-sm py-0"
+        .text-body-secondary= place.note
 - else
-  %p.text-body-secondary まだ場所がありません
+  %p.text-body-secondary 場所がありません
   = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
+-# ストックが0件でも（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
+.text-center.mt-4
+  = link_to "訪問済みの場所を見る", visits_path

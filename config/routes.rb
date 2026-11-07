@@ -1,7 +1,12 @@
 Rails.application.routes.draw do
   devise_for :users
 
-  resources :places, only: %i[index new create edit update destroy]
+  resources :places, only: %i[index new create edit update destroy] do
+    # 訪問の記録は場所ごとに付けるため、場所の下に置く
+    resources :visits, only: %i[new create]
+  end
+  # 訪問済みの一覧と取り消しは、場所をまたいで扱う
+  resources :visits, only: %i[index destroy]
   # 今日決める画面は root で表示する。ここでは「別の3件」だけを生やす
   resource :decision, only: [] do
     post :redraw

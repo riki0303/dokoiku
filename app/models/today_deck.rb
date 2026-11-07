@@ -2,7 +2,7 @@
 # その日に「別の3件」で見送った場所（seen_ids）と、距離感ごとにいま出している手札（hands）を
 # セッションの Hash で受け渡しする
 #
-#   deck = TodayDeck.new(session[:today], policy_scope(Place))
+#   deck = TodayDeck.new(session[:today], policy_scope(Place).in_stock)
 #   hand_ids = deck.current_hand(distance)
 #   hand_ids = deck.draw(distance) if hand_ids.empty?
 #   session[:today] = deck.to_h
@@ -17,7 +17,7 @@ class TodayDeck
   ALL_KEY = "all".freeze
 
   # state: セッションに入れていた Hash（初回は nil）。キーは Cookie を経由すると文字列になるため、文字列で扱う
-  # scope: 候補にする場所（現在のグループに絞ったもの）
+  # scope: 候補にする場所（現在のグループのストックに絞ったもの）
   def initialize(state, scope, today: Date.current)
     @scope = scope
     @state = state.to_h.stringify_keys

@@ -3,12 +3,10 @@ class PlacesController < ApplicationController
 
   def index
     authorize Place
-    # 自分のグループに絞ったあとに ransack をかけるため、q に何を送っても他グループの場所は出ない
-    own_places = policy_scope(Place)
-    @q = own_places.ransack(search_params)
+    stock = policy_scope(Place).in_stock
+    @any_places = stock.exists?
+    @q = stock.ransack(search_params)
     @places = @q.result.order(created_at: :desc)
-    # 0件のとき「まだ場所がない」のか「絞り込んだ結果だけ0件」なのかを出し分けるため
-    @any_places = own_places.exists?
   end
 
   def new
