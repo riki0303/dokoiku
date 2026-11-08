@@ -298,7 +298,8 @@ UI に「30分以内」「10km」などの時間・距離の数値表記を出�
   - development / test では、存在しない ID と同じく詳細なエラー画面（デバッグ画面）になる。元の `Pundit::NotAuthorizedError` は原因（cause）として表示されるため、開発中は認可で拒否されたことを確認できる
   - 未ログイン時は Devise がログイン画面へリダイレクトする（認証の範囲のため、この方針の対象外）
 - 外部 API への依存はゼロ
-- 環境変数に入れるべき秘密情報は現時点で存在しない
+- 秘密情報は `RAILS_MASTER_KEY` のみ。リポジトリにはコミットせず、Render の環境変数で管理する（`DATABASE_URL` は Render が DB から自動で設定する）
+- ホスティングは Render（Web + Postgres）。手順は [docs/deploy.md](../deploy.md)
 
 ---
 
