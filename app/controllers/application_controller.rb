@@ -34,9 +34,9 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # 認可エラー時は、そのデータが存在するかどうかを知られないよう 404 を返す（本番環境では、存在しない ID を指定したときと同じ見え方になる）。
-  # raise ActiveRecord::RecordNotFound だと development ではデバッグ画面になり環境で見え方が変わるため、public/404.html を直接返す
+  # 認可エラーは「見つからない」扱いにし、存在しない ID を指定したときと同じ処理にする（他のグループのデータが存在するかどうかを推測させないため）。
+  # 本番では public/404.html を 404 で返し、開発では元の Pundit::NotAuthorizedError が cause として見えるデバッグ画面になる
   def user_not_authorized
-    render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
+    raise ActiveRecord::RecordNotFound
   end
 end
