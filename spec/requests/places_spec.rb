@@ -77,6 +77,12 @@ RSpec.describe "Places", type: :request do
         expect(links).to eq(expected)
       end
 
+      it "見出しとタイトルに「場所一覧」を表示すること", :aggregate_failures do
+        get places_path
+        expect(response.parsed_body.at_css("h1")&.text).to eq("場所一覧")
+        expect(response.parsed_body.at_css("title")&.text).to include("場所一覧")
+      end
+
       it "見出し横に登録画面へのリンクを表示すること" do
         get places_path
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
@@ -140,7 +146,7 @@ RSpec.describe "Places", type: :request do
       end
     end
 
-    context "ログイン済みでストックをすべて消化した場合" do
+    context "ログイン済みで行きたい場所をすべて消化した場合" do
       before do
         create(:visit, place: create(:place, group: user.group, name: "江ノ島"), want_again: false)
         sign_in user

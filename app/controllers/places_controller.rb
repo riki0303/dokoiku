@@ -3,9 +3,9 @@ class PlacesController < ApplicationController
 
   def index
     authorize Place
-    stock = policy_scope(Place).in_stock
-    @any_places = stock.exists?
-    @q = stock.ransack(search_params)
+    wanted_places = policy_scope(Place).wanted
+    @any_places = wanted_places.exists?
+    @q = wanted_places.ransack(search_params)
     @places = @q.result.order(created_at: :desc)
   end
 

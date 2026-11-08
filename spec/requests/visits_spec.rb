@@ -5,8 +5,8 @@ RSpec.describe "Visits", type: :request do
   let(:place) { create(:place, group: user.group, name: "江ノ島") }
   let(:valid_params) { { visit: { visited_on: Date.current.iso8601, want_again: "false" } } }
 
-  # ストック一覧に出ている場所の名前
-  def stock_names
+  # 場所一覧に出ている場所の名前
+  def wanted_place_names
     get places_path
     response.parsed_body.css(".list-group-item .fw-bold").map(&:text)
   end
@@ -19,7 +19,7 @@ RSpec.describe "Visits", type: :request do
       end
     end
 
-    context "ログイン済みでストックに残っている場所の場合" do
+    context "ログイン済みで行きたい場所に残っている場所の場合" do
       let(:html) { response.parsed_body }
 
       before do
@@ -117,17 +117,17 @@ RSpec.describe "Visits", type: :request do
         expect(Visit.last).to have_attributes(place: place, visited_on: Date.current, want_again: false)
       end
 
-      it "ストック一覧にリダイレクトし、訪問済みにしたことを表示すること", :aggregate_failures do
+      it "場所一覧にリダイレクトし、訪問済みにしたことを表示すること", :aggregate_failures do
         post place_visits_path(place), params: valid_params
         expect(response).to redirect_to(places_path)
         follow_redirect!
         expect(response.body).to include("江ノ島を訪問済みにしました")
       end
 
-      it "ストック一覧から消えること" do
+      it "場所一覧から消えること" do
         create(:place, group: user.group, name: "鎌倉")
         post place_visits_path(place), params: valid_params
-        expect(stock_names).to eq(%w[鎌倉])
+        expect(wanted_place_names).to eq(%w[鎌倉])
       end
     end
 
@@ -141,16 +141,16 @@ RSpec.describe "Visits", type: :request do
         expect(Visit.last).to have_attributes(place: place, visited_on: 3.days.ago.to_date, want_again: true)
       end
 
-      it "ストック一覧にリダイレクトし、ストックに残ることを表示すること", :aggregate_failures do
+      it "場所一覧にリダイレクトし、行きたい場所に残ることを表示すること", :aggregate_failures do
         post place_visits_path(place), params: params
         expect(response).to redirect_to(places_path)
         follow_redirect!
-        expect(response.body).to include("江ノ島の訪問を記録しました（ストックに残ります）")
+        expect(response.body).to include("江ノ島の訪問を記録しました（行きたい場所に残ります）")
       end
 
-      it "ストック一覧に残ること" do
+      it "場所一覧に残ること" do
         post place_visits_path(place), params: params
-        expect(stock_names).to eq(%w[江ノ島])
+        expect(wanted_place_names).to eq(%w[江ノ島])
       end
 
       it "同じ場所に2回目の記録ができること" do
@@ -279,9 +279,9 @@ RSpec.describe "Visits", type: :request do
         expect(form.at_css("button").text).to eq("取り消す")
       end
 
-      it "見出しとストック一覧へのリンクを表示すること", :aggregate_failures do
+      it "見出しと場所一覧へのリンクを表示すること", :aggregate_failures do
         expect(response.parsed_body.at_css("h1").text).to eq("訪問済み")
-        expect(response.parsed_body.at_css("main a[href='#{places_path}']")).to be_present
+        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("場所一覧")
       end
     end
 
@@ -324,10 +324,10 @@ RSpec.describe "Visits", type: :request do
         expect(response.body).to include("江ノ島の訪問記録を取り消しました")
       end
 
-      it "「いいえ」の記録を取り消すと、ストックに戻ること", :aggregate_failures do
-        expect(stock_names).to be_empty
+      it "「いいえ」の記録を取り消すと、場所一覧に戻ること", :aggregate_failures do
+        expect(wanted_place_names).to be_empty
         delete visit_path(visit)
-        expect(stock_names).to eq(%w[江ノ島])
+        expect(wanted_place_names).to eq(%w[江ノ島])
       end
     end
 

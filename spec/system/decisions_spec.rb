@@ -31,7 +31,7 @@ RSpec.describe "Decisions", type: :system do
         click_button I18n.t("devise.sessions.new.sign_in")
       end
 
-      it "トップに今日決める画面が表示されること", :aggregate_failures do
+      it "トップに今日決める画面（見出し「今日どこ行く？」）が表示されること", :aggregate_failures do
         expect(page).to have_current_path(root_path)
         expect(page).to have_css(".card", text: "夕日を見に行きたい")
       end
@@ -75,14 +75,23 @@ RSpec.describe "Decisions", type: :system do
       expect(shown_names).to eq(first)
     end
 
-    it "ナビバーから場所の登録画面へ移動できること" do
-      within("nav.navbar") { click_link "場所を登録" }
-      expect(page).to have_current_path(new_place_path)
+    it "ナビバーから場所一覧へ移動できること", :aggregate_failures do
+      within("nav.navbar") { click_link "場所一覧" }
+      expect(page).to have_current_path(places_path)
+      expect(page).to have_css("h1", text: "場所一覧")
     end
 
-    it "ナビバーからストック一覧へ移動できること" do
-      within("nav.navbar") { click_link "ストック一覧" }
-      expect(page).to have_current_path(places_path)
+    it "ナビバーの「今日どこ行く？」から今日決める画面（見出し「今日どこ行く？」）へ移動できること", :aggregate_failures do
+      visit places_path
+      within("nav.navbar") { click_link "今日どこ行く？" }
+      expect(page).to have_current_path(root_path)
+      expect(page).to have_css("h1", text: "今日どこ行く？")
+    end
+
+    it "場所一覧の「場所を登録する」から登録画面へ移動できること" do
+      visit places_path
+      within("main") { click_link "場所を登録する" }
+      expect(page).to have_current_path(new_place_path)
     end
   end
 end
