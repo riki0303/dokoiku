@@ -1,6 +1,6 @@
 # Dependabot 自動マージとブランチ保護の設定手順
 
-Dependabot のパッチ・マイナー更新 PR を、CI がすべて成功したあとに自動で merge するための設定手順です（Issue #86）。
+Dependabot のパッチ・マイナー更新 PR を、必須チェック（CI の 4 ジョブ）がすべて成功したあとに自動で merge するための設定手順です（Issue #86）。
 
 ワークフロー（`.github/workflows/dependabot-auto-merge.yml`）はリポジトリに含まれていますが、
 **GitHub の画面での設定（この手順書の内容）は手動で行う必要があります。**
@@ -17,18 +17,19 @@ Dependabot のパッチ・マイナー更新 PR を、CI がすべて成功し�
 2. `dependabot/fetch-metadata` で更新の種類（update-type）を調べます
 3. パッチ更新（`version-update:semver-patch`）かマイナー更新（`version-update:semver-minor`）なら、
    `gh pr merge --auto --merge` で **自動マージを予約** します（merge 方式は merge commit）
-4. GitHub が、ルールセットで必須にした CI の 6 ジョブがすべて成功するのを待ってから merge します
+4. GitHub が、ルールセットで必須にした CI の 4 ジョブ（`brakeman` / `rubocop` / `rails_best_practices` / `rspec`）がすべて成功するのを待ってから merge します
 
 | PR の種類 | どうなるか |
 | --- | --- |
-| Dependabot のパッチ・マイナー更新 | 自動マージが予約され、CI 成功後に merge される |
-| Dependabot のパッチ・マイナー更新で CI が失敗 | merge されずに残る（手で確認する） |
+| Dependabot のパッチ・マイナー更新 | 自動マージが予約され、必須チェック成功後に merge される |
+| Dependabot のパッチ・マイナー更新で必須チェックが失敗 | merge されずに残る（手で確認する） |
 | Dependabot のメジャー更新 | 予約されない（今まで通り手でレビューして merge） |
 | 更新の種類が判定できない PR（バージョンを比較できない更新。git 参照の gem、SHA 固定の action など） | 予約されない（安全側に倒している） |
 | 人が作った PR | ワークフロー自体が動かない（対象外） |
 
 - 対象の依存は bundler / github-actions / npm（セキュリティ更新）のすべてです。ecosystem では絞っていません
 - 承認（Approve）は不要です。ルールセットの必須承認数を 0 にしているためです
+- `bundler_audit` / `importmap_audit` は必須チェックではありません。これらが失敗（赤い ×）していても、必須の 4 ジョブが通れば自動マージされます（理由は 3 章を参照）
 
 ---
 
@@ -67,12 +68,10 @@ Dependabot のパッチ・マイナー更新 PR を、CI がすべて成功し�
 - **Restrict deletions**（`main` の削除を禁止）
 - **Require a pull request before merging**（PR を必須にする＝直接 push を禁止）
   - **Required approvals**: **0**（自分で merge できる今の流れを維持するため）
-- **Require status checks to pass**（CI の成功を必須にする）
+- **Require status checks to pass**（必須チェックの成功を必須にする）
   - **Require branches to be up to date before merging**: **OFF**（チェックを外す）
-  - **Add checks** で次の 6 つを追加する
+  - **Add checks** で次の 4 つを追加する（`bundler_audit` / `importmap_audit` は追加しない）
     - `brakeman`
-    - `bundler_audit`
-    - `importmap_audit`
     - `rubocop`
     - `rails_best_practices`
     - `rspec`
@@ -85,6 +84,17 @@ ON にすると、PR のブランチが最新の `main` を取り込んでいな
 Dependabot の PR が何件も溜まっているとき、1 件 merge するたびに残りの PR がすべて rebase 待ちになり、
 自動マージが順番に詰まってしまうため OFF にします。
 
+**`bundler_audit` / `importmap_audit` を必須チェックにしない理由:**
+2 つの audit は `ci.yml` でこれまで通り動かし続けますが、必須にはしません。
+
+- audit は PR の差分ではなく、Gemfile.lock / importmap に含まれる依存全体を、**毎回その時点で最新の脆弱性データベース** と照合します。
+  データベースに新しい脆弱性が追加されると、PR の変更内容と関係なく、すべての PR で audit が落ちます。
+  必須にすると、関係ない PR まで全部 merge できなくなります
+- さらに、別々の gem にある脆弱性をそれぞれ直す PR どうしが、お互いに相手の直していない脆弱性で落ち合い、どちらも merge できなくなります
+  （実例: この設定を入れた PR #88 自体も、`main` の rails 8.1.4 の脆弱性で `bundler_audit` が落ちました）
+- 一方 `brakeman` は自分たちのコードと Gemfile.lock（Rails の版など）を、Gemfile.lock で固定した brakeman の版に含まれるルールで検査します。外部のデータベースは見ません。
+  同じコードなら毎回同じ結果になるため、必須のまま残します
+
 **必須チェック名について:**
 必須チェックの名前は `.github/workflows/ci.yml` の **ジョブ名**（`jobs:` の直下のキー）と一致している必要があります。
 `ci.yml` のジョブ名を変更したり、ジョブを追加・削除したりした場合は、**ルールセットの必須チェックも合わせて更新してください**。
@@ -94,26 +104,39 @@ Dependabot の PR が何件も溜まっているとき、1 件 merge するた�
 
 ## 4. 設定後の確認
 
-- 人の PR で、CI が完了する前・失敗したときに merge ボタンが押せないこと
+- 人の PR で、必須チェック（4 ジョブ）が完了する前・失敗したときに merge ボタンが押せないこと（audit だけが失敗している場合は押せるのが正しい）
 - `main` へ直接 push すると拒否されること
-- Dependabot のパッチ・マイナー更新 PR に「Auto-merge enabled」と表示され、CI 成功後に merge されること
+- Dependabot のパッチ・マイナー更新 PR に「Auto-merge enabled」と表示され、必須チェック成功後に merge されること
 
 ### 確認事項: github-actions の更新 PR が自動 merge まで進むか
 
 github-actions の更新 PR は `.github/workflows/` 配下のファイルを変更します。
 `GITHUB_TOKEN` で予約した自動 merge がこの種の PR でも通るかは **未確認** です。
-最初に届いた github-actions の更新 PR で、CI 成功後に実際に merge まで進むかを確認してください。
+最初に届いた github-actions の更新 PR で、必須チェック成功後に実際に merge まで進むかを確認してください。
 merge されずに止まった場合は、手で merge してください。
 
 ---
 
 ## 5. 注意点
 
+### audit が失敗していても自動マージされる
+
+`bundler_audit` / `importmap_audit` は必須チェックではないため、これらが赤い × のままでも、必須の 4 ジョブが通れば自動マージされます。
+
+そのため、更新によって推移的依存（直接書いていない依存）が既知の脆弱な版に変わる PR も、自動マージされることがあります。
+通常は、Dependabot のセキュリティ更新が修正 PR を作ってくれます（パッチ・マイナー更新なら、それも自動マージされます。Settings → Code security で Dependabot security updates が ON になっている前提です）。
+ただし次の場合は修正 PR が来ない、または手作業が必要になるため、**Dependabot アラート（Security タブ）で気づいたら手で対応してください**。
+
+- 修正版がまだリリースされていない場合
+- 修正にメジャー更新が必要な場合（メジャー更新は自動マージの対象外）
+
+**本番デプロイ後に見直す候補:** PR で「新しく増えた脆弱性」だけを失敗させる差分方式の audit を導入し、audit を必須チェックに戻す。
+
 ### 自動マージで merge されたあと、`main` の CI は動かない
 
 ワークフローの `GITHUB_TOKEN` で行った操作は、GitHub の仕様で他のワークフローを起動しません。
 そのため、自動マージによる `main` への push では `ci.yml` の `push: main` トリガーが動きません。
-merge 前に PR 上で CI が通っており、デプロイ用のワークフローもないため、問題にならない想定です。
+merge 前に PR 上で必須チェックが通っており、デプロイ用のワークフローもないため、問題にならない想定です。
 
 ### ワークフロー導入前から open の Dependabot PR は自動では予約されない
 

@@ -1,7 +1,7 @@
 name: Dependabot auto-merge
 
 # Dependabot のパッチ・マイナー更新 PR に自動マージを予約する（Issue #86）
-# 実際の merge は GitHub の auto-merge が、ルールセットの必須チェック（CI 6 ジョブ）の成功を待って行う。
+# 実際の merge は GitHub の auto-merge が、ルールセットの必須チェック（CI のうち brakeman / rubocop / rails_best_practices / rspec の 4 ジョブ）の成功を待って行う。
 # 設定手順は docs/dependabot-auto-merge.md を参照
 on:
   pull_request:
