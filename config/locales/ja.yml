@@ -24,3 +24,8 @@ ja:
         place: 場所
         visited_on: 訪問日
         want_again: また行きたいか
+  devise:
+    registrations:
+      edit:
+        # devise-i18n の既定は「ユーザー編集」。ナビバーのメニュー名「アカウント設定」に合わせる
+        title: アカウント設定

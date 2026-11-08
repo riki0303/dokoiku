@@ -130,10 +130,42 @@ RSpec.describe "Decisions", type: :request do
         expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")).to be_nil
       end
 
-      it "ナビバーのメニューを「今日どこ行く？」「場所一覧」・ユーザー名の順に表示すること" do
+      it "ナビバーのメニューを「今日どこ行く？」「行きたい場所」「訪問済み」・ユーザー名の順に表示すること" do
         get root_path
-        links = response.parsed_body.css("#navbar-menu a").map { |link| [ link.text, link["href"] ] }
-        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "場所一覧", places_path ], [ user.name, edit_user_registration_path ] ])
+        items = response.parsed_body.css("#navbar-menu .navbar-nav > li > .nav-link").map { |item| item.text.strip }
+        expect(items).to eq([ "今日どこ行く？", "行きたい場所", "訪問済み", user.name ])
+      end
+
+      it "ナビバーのリンク先を今日決める・行きたい場所・訪問済みにすること" do
+        get root_path
+        links = response.parsed_body.css("#navbar-menu .navbar-nav > li > a.nav-link").map { |link| [ link.text, link["href"] ] }
+        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "行きたい場所", places_path ], [ "訪問済み", visits_path ] ])
+      end
+
+      it "ナビバーのユーザー名をドロップダウンのトグルにすること", :aggregate_failures do
+        get root_path
+        toggle = response.parsed_body.at_css("#navbar-menu button.dropdown-toggle[data-bs-toggle='dropdown']")
+        expect(toggle).to be_present
+        expect(toggle.text.strip).to eq(user.name)
+      end
+
+      it "ナビバーのドロップダウンを暗いナビバーに合わせた暗い配色にすること" do
+        get root_path
+        expect(response.parsed_body.at_css("#navbar-menu .dropdown-menu[data-bs-theme='dark']")).to be_present
+      end
+
+      it "ナビバーのドロップダウンにアカウント設定へのリンクを置くこと", :aggregate_failures do
+        get root_path
+        link = response.parsed_body.at_css("#navbar-menu .dropdown-menu a.dropdown-item[href='#{edit_user_registration_path}']")
+        expect(link).to be_present
+        expect(link.text).to eq("アカウント設定")
+      end
+
+      it "ナビバーのドロップダウンにログアウトボタンを置くこと", :aggregate_failures do
+        get root_path
+        button = response.parsed_body.at_css("#navbar-menu .dropdown-menu form[action='#{destroy_user_session_path}'] button.dropdown-item")
+        expect(button).to be_present
+        expect(button.text).to eq("ログアウト")
       end
 
       it "ナビバーに場所の登録へのリンクを表示しないこと" do

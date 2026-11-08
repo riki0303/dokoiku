@@ -10,9 +10,9 @@ RSpec.describe "Users::Sessions", type: :request do
       expect(response.body).not_to include("パスワードを忘れましたか？")
     end
 
-    it "未ログインのナビバーに「今日どこ行く？」と場所一覧へのリンクを表示しないこと" do
+    it "未ログインのナビバーに「今日どこ行く？」「行きたい場所」「訪問済み」へのリンクを表示しないこと" do
       get new_user_session_path
-      expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("今日どこ行く？", "場所一覧")
+      expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("今日どこ行く？", "行きたい場所", "訪問済み")
     end
 
     # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する

@@ -1,7 +1,5 @@
 - content_for :title, "訪問済み"
-.d-flex.justify-content-between.align-items-center.mb-3
-  %h1.h3.mb-0 訪問済み
-  = link_to "場所一覧", places_path, class: "btn btn-outline-primary btn-sm"
+%h1.h3.mb-3 訪問済み
 -# load してから any? を呼び、件数確認と一覧表示の問い合わせを1回にまとめる
 - if @visits.load.any?
   %ul.list-group
