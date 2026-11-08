@@ -15,7 +15,7 @@
               method: :delete,
               class: "btn btn-link btn-sm py-0 text-danger",
               form: { data: { turbo_confirm: "#{visit.place_name}の訪問記録を取り消しますか？" } }
-        .text-body-secondary= visit.place_note
+        .text-body-secondary.text-break= link_urls(visit.place_note)
         .small.text-body-secondary.mt-1
           %span.visited-on #{Visit.human_attribute_name(:visited_on)}：#{l(visit.visited_on)}
           %span.want-again.ms-3 #{Visit.human_attribute_name(:want_again)}：#{want_again_label(visit.want_again)}

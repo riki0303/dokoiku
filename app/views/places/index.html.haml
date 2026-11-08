@@ -24,7 +24,7 @@
             %span.badge.text-bg-secondary= distance_label(place.distance)
             = link_to "行った", new_place_visit_path(place), class: "btn btn-link btn-sm py-0"
             = link_to "編集", edit_place_path(place), class: "btn btn-link btn-sm py-0"
-        .text-body-secondary= place.note
+        .text-body-secondary.text-break= link_urls(place.note)
 - else
   %p.text-body-secondary 場所がありません
   = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"

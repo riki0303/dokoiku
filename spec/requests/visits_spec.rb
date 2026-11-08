@@ -283,6 +283,19 @@ RSpec.describe "Visits", type: :request do
       end
     end
 
+    context "ログイン済みで訪問した場所の一言に URL がある場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "駅前のカフェ", note: "メニューは https://example.com/menu を見る"))
+        sign_in user
+      end
+
+      it "一言の URL を新しいタブで開くリンクにすること" do
+        get visits_path
+        link = response.parsed_body.at_css(".list-group-item a[href='https://example.com/menu']")
+        expect(link.to_h).to include("target" => "_blank", "rel" => "noopener noreferrer")
+      end
+    end
+
     context "ログイン済みで訪問記録が1件もない場合" do
       before do
         create(:visit, place: create(:place, group: create(:user).group))

@@ -315,6 +315,19 @@ RSpec.describe "Decisions", type: :request do
       end
     end
 
+    context "ログイン済みで一言に URL がある場所がある場合" do
+      before do
+        create(:place, group: user.group, name: "駅前のカフェ", note: "メニューは https://example.com/menu を見る")
+        sign_in user
+      end
+
+      it "一言の URL を新しいタブで開くリンクにすること" do
+        get root_path
+        link = response.parsed_body.at_css(".card-text a[href='https://example.com/menu']")
+        expect(link.to_h).to include("target" => "_blank", "rel" => "noopener noreferrer")
+      end
+    end
+
     context "ログイン済みで場所が1件もない場合" do
       before do
         create(:place, group: create(:user).group)
