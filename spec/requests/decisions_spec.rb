@@ -130,10 +130,21 @@ RSpec.describe "Decisions", type: :request do
         expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")).to be_nil
       end
 
-      it "ナビバーに場所の登録・ストック一覧へのリンクを表示すること" do
+      it "ナビバーのメニューを「今日どこ行く？」「場所一覧」・ユーザー名の順に表示すること" do
         get root_path
-        links = response.parsed_body.css("nav.navbar a").to_h { |link| [ link.text, link["href"] ] }
-        expect(links).to include("場所を登録" => new_place_path, "ストック一覧" => places_path)
+        links = response.parsed_body.css("#navbar-menu a").map { |link| [ link.text, link["href"] ] }
+        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "場所一覧", places_path ], [ user.name, edit_user_registration_path ] ])
+      end
+
+      it "ナビバーに場所の登録へのリンクを表示しないこと" do
+        get root_path
+        expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("場所を登録")
+      end
+
+      it "見出しとタイトルに「今日どこ行く？」を表示すること", :aggregate_failures do
+        get root_path
+        expect(response.parsed_body.at_css("h1")&.text).to eq("今日どこ行く？")
+        expect(response.parsed_body.at_css("title")&.text).to include("今日どこ行く？")
       end
     end
 
@@ -290,7 +301,7 @@ RSpec.describe "Decisions", type: :request do
       end
     end
 
-    context "ログイン済みでストックをすべて消化した場合" do
+    context "ログイン済みで行きたい場所をすべて消化した場合" do
       before do
         create(:visit, place: create(:place, group: user.group, name: "江ノ島"), want_again: false)
         sign_in user
