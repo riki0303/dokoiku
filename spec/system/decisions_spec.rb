@@ -3,15 +3,18 @@ require "rails_helper"
 RSpec.describe "Decisions", type: :system do
   let(:user) { create(:user) }
 
-  # 画面に出ている場所の名前
+  # 画面に出ている場所の名前（念のため、読む途中で画面が入れ替わって要素が古くなったら、取り直して読み直す）
   def shown_names
-    all(".card-title").map(&:text)
+    page.document.synchronize { all(".card-title").map(&:text) }
   end
 
   # 絞り込みボタンを押し、選んだ距離感の画面に入れ替わるまで待つ（次の操作や確認を前の画面に対して行わないため）
   def click_distance(label)
     click_link label
     find("a[aria-current='page']", text: label)
+    # 前に見た画面へ戻るとき、Turbo はサーバーの応答の前にキャッシュを仮表示する（html に data-turbo-preview が付く）。
+    # 仮表示にも aria-current の付いたリンクがあり上の find は通ってしまうので、仮表示が終わって本物の画面に入れ替わるまで待つ
+    expect(page).to have_no_css("html[data-turbo-preview]")
   end
 
   context "未ログインの場合" do
