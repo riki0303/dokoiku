@@ -34,8 +34,9 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # 認可エラーは「見つからない」扱いにし、存在しない ID を指定したときと同じ処理にする（他のグループのデータが存在するかどうかを推測させないため）。
+  # 本番では public/404.html を 404 で返し、開発では元の Pundit::NotAuthorizedError が cause として見えるデバッグ画面になる
   def user_not_authorized
-    flash[:alert] = "この操作を行う権限がありません。"
-    redirect_back_or_to root_path, status: :see_other
+    raise ActiveRecord::RecordNotFound
   end
 end

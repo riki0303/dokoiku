@@ -77,6 +77,12 @@ RSpec.describe "Places", type: :request do
         expect(links).to eq(expected)
       end
 
+      it "見出しとタイトルに「場所一覧」を表示すること", :aggregate_failures do
+        get places_path
+        expect(response.parsed_body.at_css("h1")&.text).to eq("場所一覧")
+        expect(response.parsed_body.at_css("title")&.text).to include("場所一覧")
+      end
+
       it "見出し横に登録画面へのリンクを表示すること" do
         get places_path
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
@@ -99,11 +105,67 @@ RSpec.describe "Places", type: :request do
         expect(response.body).not_to match(/\d+\s*(分|時間|km|キロ)/)
       end
 
-      it "各行に編集画面へのリンクを表示すること" do
+      it "各行に訪問の記録画面と編集画面へのリンクを表示すること" do
         get places_path
         links = response.parsed_body.css(".list-group-item a").map { |link| [ link.text, link["href"] ] }
-        expected = Place.where(group: user.group).order(created_at: :desc).map { |place| [ "編集", edit_place_path(place) ] }
+        places = Place.where(group: user.group).order(created_at: :desc)
+        expected = places.flat_map { |place| [ [ "行った", new_place_visit_path(place) ], [ "編集", edit_place_path(place) ] ] }
         expect(links).to eq(expected)
+      end
+
+      it "「行った」リンクを「編集」リンクと同じ見た目にすること" do
+        get places_path
+        classes = response.parsed_body.css(".list-group-item a").map { |link| link["class"] }.uniq
+        expect(classes).to eq([ "btn btn-link btn-sm py-0" ])
+      end
+
+      it "訪問済み一覧へのリンクを表示すること" do
+        get places_path
+        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_present
+      end
+    end
+
+    context "ログイン済みで訪問を記録した場所がある場合" do
+      let(:listed_names) { response.parsed_body.css(".list-group-item .fw-bold").map(&:text) }
+
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "もう行かない場所", distance: :near), want_again: false)
+        create(:visit, place: create(:place, group: user.group, name: "また行きたい場所", distance: :near), want_again: true)
+        create(:place, group: user.group, name: "まだ行っていない場所", distance: :near)
+        sign_in user
+      end
+
+      it "消化済み（いいえ）の場所を表示せず、「はい」の場所は表示すること" do
+        get places_path
+        expect(listed_names).to contain_exactly("また行きたい場所", "まだ行っていない場所")
+      end
+
+      it "距離感で絞り込んでも消化済みの場所を表示しないこと" do
+        get places_path, params: { q: { distance_eq: "near" } }
+        expect(listed_names).to contain_exactly("また行きたい場所", "まだ行っていない場所")
+      end
+    end
+
+    context "ログイン済みで行きたい場所をすべて消化した場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "江ノ島"), want_again: false)
+        sign_in user
+        get places_path
+      end
+
+      it "場所がない場合と同じ「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+        expect(response.body).to include("場所がありません")
+        expect(response.body).not_to include("江ノ島")
+        expect(response.parsed_body.css("main a[href='#{new_place_path}']").map(&:text)).to eq([ "場所を登録する" ])
+      end
+
+      it "絞り込みボタンと見出し横の登録ボタンを表示しないこと", :aggregate_failures do
+        expect(response.parsed_body.css("a[href^='#{places_path}?']")).to be_empty
+        expect(response.parsed_body.css("main a.btn-sm[href='#{new_place_path}']")).to be_empty
+      end
+
+      it "訪問済み一覧へのリンクを表示すること" do
+        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_present
       end
     end
 
@@ -113,17 +175,16 @@ RSpec.describe "Places", type: :request do
         sign_in user
       end
 
-      it "距離感入りの0件メッセージを表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
+      it "「場所がありません」を表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
         get places_path, params: { q: { distance_eq: "far" } }
-        expect(response.body).to include("遠出の場所はありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.css("a[aria-current='page']").map(&:text)).to eq([ "遠出" ])
-        expect(response.body).not_to include("まだ場所がありません")
       end
 
-      it "不正な値ならエラーにせず0件メッセージを表示すること", :aggregate_failures do
+      it "不正な値ならエラーにせず「場所がありません」を表示すること", :aggregate_failures do
         get places_path, params: { q: { distance_eq: "xxx" } }
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("該当する場所はありません")
+        expect(response.body).to include("場所がありません")
       end
     end
 
@@ -150,7 +211,7 @@ RSpec.describe "Places", type: :request do
 
       it "案内文と登録画面へのリンクを表示すること", :aggregate_failures do
         get places_path
-        expect(response.body).to include("まだ場所がありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
@@ -350,9 +411,10 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返すこと" do
+      it "404 を返し、flash を出さないこと", :aggregate_failures do
         get edit_place_path(other_place)
         expect(response).to have_http_status(:not_found)
+        expect(flash[:alert]).to be_nil
       end
     end
   end
@@ -449,10 +511,11 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を更新しないこと", :aggregate_failures do
+      it "404 を返し、場所を更新せず、flash を出さないこと", :aggregate_failures do
         patch place_path(other_place), params: update_params
         expect(response).to have_http_status(:not_found)
         expect(other_place.reload.name).to eq("他人の場所")
+        expect(flash[:alert]).to be_nil
       end
     end
   end
@@ -482,6 +545,12 @@ RSpec.describe "Places", type: :request do
         follow_redirect!
         expect(response.body).to include("江ノ島を削除しました")
       end
+
+      it "訪問記録がある場所を削除すると、訪問記録も消して 303 を返すこと", :aggregate_failures do
+        create_list(:visit, 2, place: place, want_again: true)
+        expect { delete place_path(place) }.to change(Visit, :count).by(-2)
+        expect(response).to have_http_status(:see_other)
+      end
     end
 
     context "ログイン済みで他のグループの場所の場合" do
@@ -489,9 +558,10 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を削除しないこと", :aggregate_failures do
+      it "404 を返し、場所を削除せず、flash を出さないこと", :aggregate_failures do
         expect { delete place_path(other_place) }.not_to change(Place, :count)
         expect(response).to have_http_status(:not_found)
+        expect(flash[:alert]).to be_nil
       end
     end
   end

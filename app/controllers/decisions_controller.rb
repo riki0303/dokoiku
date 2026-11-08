@@ -3,19 +3,18 @@ class DecisionsController < ApplicationController
   def show
     authorize :decision, :show?
     @distance = distance_param
-    own_places = policy_scope(Place)
-    # 0件のとき「まだ場所がない」のか「今日の候補を引き切った」のかを出し分けるため
-    @any_places = own_places.exists?
+    wanted_places = policy_scope(Place).wanted
+    @any_places = wanted_places.exists?
 
-    deck = TodayDeck.new(session[:today], own_places)
+    deck = TodayDeck.new(session[:today], wanted_places)
     hand_ids = deck.current_hand(@distance)
     # 再読み込みや距離感の切り替えでは、その距離感で覚えている手札を出す（山札は進めない）。
     # Turbo はリンクにマウスを乗せただけでこの GET を先読みするため、show で山札を進めてはいけない。
     # 手札がなければ（初回・引き切り・手札の場所がすべて削除や他の距離感で見送られた）新しく引く
     hand_ids = deck.draw(@distance) if hand_ids.empty?
     session[:today] = deck.to_h
-    # セッションの id は信用せず、自分のグループの場所から取り直す（引いたあとに削除された場所は出さない）
-    @places = own_places.in_order_of(:id, hand_ids)
+    # セッションの id は信用せず、自分のグループの行きたい場所から取り直す（引いたあとに削除・消化された場所は出さない）
+    @places = wanted_places.in_order_of(:id, hand_ids)
   end
 
   # 「別の3件」。いま出している手札を見送ってセッションの山札を進めるため POST にし、
@@ -23,7 +22,7 @@ class DecisionsController < ApplicationController
   def redraw
     authorize :decision, :redraw?
     distance = distance_param
-    deck = TodayDeck.new(session[:today], policy_scope(Place))
+    deck = TodayDeck.new(session[:today], policy_scope(Place).wanted)
     deck.redraw(distance)
     session[:today] = deck.to_h
     redirect_to root_path(distance: distance), status: :see_other

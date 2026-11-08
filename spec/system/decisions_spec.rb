@@ -3,15 +3,18 @@ require "rails_helper"
 RSpec.describe "Decisions", type: :system do
   let(:user) { create(:user) }
 
-  # 画面に出ている場所の名前
+  # 画面に出ている場所の名前（念のため、読む途中で画面が入れ替わって要素が古くなったら、取り直して読み直す）
   def shown_names
-    all(".card-title").map(&:text)
+    page.document.synchronize { all(".card-title").map(&:text) }
   end
 
   # 絞り込みボタンを押し、選んだ距離感の画面に入れ替わるまで待つ（次の操作や確認を前の画面に対して行わないため）
   def click_distance(label)
     click_link label
     find("a[aria-current='page']", text: label)
+    # 前に見た画面へ戻るとき、Turbo はサーバーの応答の前にキャッシュを仮表示する（html に data-turbo-preview が付く）。
+    # 仮表示にも aria-current の付いたリンクがあり上の find は通ってしまうので、仮表示が終わって本物の画面に入れ替わるまで待つ
+    expect(page).to have_no_css("html[data-turbo-preview]")
   end
 
   context "未ログインの場合" do
@@ -31,7 +34,7 @@ RSpec.describe "Decisions", type: :system do
         click_button I18n.t("devise.sessions.new.sign_in")
       end
 
-      it "トップに今日決める画面が表示されること", :aggregate_failures do
+      it "トップに今日決める画面（見出し「今日どこ行く？」）が表示されること", :aggregate_failures do
         expect(page).to have_current_path(root_path)
         expect(page).to have_css(".card", text: "夕日を見に行きたい")
       end
@@ -64,7 +67,7 @@ RSpec.describe "Decisions", type: :system do
       # 2回目を押す前に、1回目の画面の入れ替わりを待つ
       all(".card", count: 2)
       click_button "別の3件"
-      expect(page).to have_content("今日はもう候補がありません")
+      expect(page).to have_content("場所がありません")
       expect(page).to have_link("場所を登録する", href: new_place_path)
     end
 
@@ -75,14 +78,23 @@ RSpec.describe "Decisions", type: :system do
       expect(shown_names).to eq(first)
     end
 
-    it "ナビバーから場所の登録画面へ移動できること" do
-      within("nav.navbar") { click_link "場所を登録" }
-      expect(page).to have_current_path(new_place_path)
+    it "ナビバーから場所一覧へ移動できること", :aggregate_failures do
+      within("nav.navbar") { click_link "場所一覧" }
+      expect(page).to have_current_path(places_path)
+      expect(page).to have_css("h1", text: "場所一覧")
     end
 
-    it "ナビバーからストック一覧へ移動できること" do
-      within("nav.navbar") { click_link "ストック一覧" }
-      expect(page).to have_current_path(places_path)
+    it "ナビバーの「今日どこ行く？」から今日決める画面（見出し「今日どこ行く？」）へ移動できること", :aggregate_failures do
+      visit places_path
+      within("nav.navbar") { click_link "今日どこ行く？" }
+      expect(page).to have_current_path(root_path)
+      expect(page).to have_css("h1", text: "今日どこ行く？")
+    end
+
+    it "場所一覧の「場所を登録する」から登録画面へ移動できること" do
+      visit places_path
+      within("main") { click_link "場所を登録する" }
+      expect(page).to have_current_path(new_place_path)
     end
   end
 end

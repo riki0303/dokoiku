@@ -88,4 +88,34 @@ RSpec.describe Place, type: :model do
       expect(described_class.ransortable_attributes).to be_empty
     end
   end
+
+  describe "訪問記録" do
+    it "場所を削除すると訪問記録も消えること" do
+      place = create(:place)
+      create_list(:visit, 2, place: place, want_again: true)
+      expect { place.destroy }.to change(Visit, :count).by(-2)
+    end
+  end
+
+  describe ".wanted" do
+    let!(:not_visited) { create(:place, name: "まだ行っていない") }
+    let!(:want_again) { create(:place, name: "また行きたい") }
+    let!(:done) { create(:place, name: "もう行かない") }
+    let!(:changed_mind) { create(:place, name: "2回目でもういい") }
+
+    before do
+      create(:visit, place: want_again, want_again: true)
+      create(:visit, place: done, want_again: false)
+      create(:visit, place: changed_mind, want_again: true, visited_on: 1.month.ago.to_date)
+      create(:visit, place: changed_mind, want_again: false)
+    end
+
+    it "訪問記録がない場所と「はい」の記録しかない場所を含むこと" do
+      expect(described_class.wanted).to contain_exactly(not_visited, want_again)
+    end
+
+    it "「いいえ」の記録が1件でもある場所を含まないこと" do
+      expect(described_class.wanted).not_to include(done, changed_mind)
+    end
+  end
 end

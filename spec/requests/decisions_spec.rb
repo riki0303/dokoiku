@@ -66,9 +66,9 @@ RSpec.describe "Decisions", type: :request do
         get root_path
       end
 
-      it "「今日はもう候補がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
@@ -130,10 +130,21 @@ RSpec.describe "Decisions", type: :request do
         expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")).to be_nil
       end
 
-      it "ナビバーに場所の登録・ストック一覧へのリンクを表示すること" do
+      it "ナビバーのメニューを「今日どこ行く？」「場所一覧」・ユーザー名の順に表示すること" do
         get root_path
-        links = response.parsed_body.css("nav.navbar a").to_h { |link| [ link.text, link["href"] ] }
-        expect(links).to include("場所を登録" => new_place_path, "ストック一覧" => places_path)
+        links = response.parsed_body.css("#navbar-menu a").map { |link| [ link.text, link["href"] ] }
+        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "場所一覧", places_path ], [ user.name, edit_user_registration_path ] ])
+      end
+
+      it "ナビバーに場所の登録へのリンクを表示しないこと" do
+        get root_path
+        expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("場所を登録")
+      end
+
+      it "見出しとタイトルに「今日どこ行く？」を表示すること", :aggregate_failures do
+        get root_path
+        expect(response.parsed_body.at_css("h1")&.text).to eq("今日どこ行く？")
+        expect(response.parsed_body.at_css("title")&.text).to include("今日どこ行く？")
       end
     end
 
@@ -199,11 +210,11 @@ RSpec.describe "Decisions", type: :request do
         expect(shown_names_for(nil)).to eq(first)
       end
 
-      it "選んだ距離感に場所がなければ「今日はもう候補がありません」を表示すること" do
+      it "選んだ距離感に場所がなければ「場所がありません」を表示すること" do
         get root_path, params: { distance: "far" }
         post redraw_decision_path, params: { distance: "far" }
         follow_redirect!
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("場所がありません")
       end
 
       it "「別の3件」は選んでいる距離感を保ったままリダイレクトすること" do
@@ -230,7 +241,7 @@ RSpec.describe "Decisions", type: :request do
 
       it "同じ日のうちは候補を出さないこと" do
         travel_to(Time.zone.local(2026, 11, 1, 23, 55)) { get root_path }
-        expect(response.body).to include("今日はもう候補がありません")
+        expect(response.body).to include("場所がありません")
       end
 
       it "日本時間で日付が変わると山札をリセットし、前日に出した場所をまた表示すること" do
@@ -261,15 +272,58 @@ RSpec.describe "Decisions", type: :request do
       end
     end
 
+    context "ログイン済みで訪問を記録した場所がある場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "もう行かない場所"), want_again: false)
+        create(:visit, place: create(:place, group: user.group, name: "また行きたい場所"), want_again: true)
+        create(:place, group: user.group, name: "まだ行っていない場所")
+        sign_in user
+      end
+
+      it "消化済み（いいえ）の場所を候補に出さず、「はい」の場所は出すこと" do
+        get root_path
+        expect(shown_names).to contain_exactly("また行きたい場所", "まだ行っていない場所")
+      end
+
+      it "手札を出したあとに消化した場所を表示しないこと" do
+        get root_path
+        create(:visit, place: Place.find_by!(name: "また行きたい場所"), want_again: false)
+        get root_path
+        expect(shown_names).to eq(%w[まだ行っていない場所])
+      end
+
+      it "「別の3件」では消化済みの場所を引かないこと", :aggregate_failures do
+        get root_path
+        post redraw_decision_path
+        follow_redirect!
+        expect(shown_names).to be_empty
+        expect(response.body).to include("場所がありません")
+      end
+    end
+
+    context "ログイン済みで行きたい場所をすべて消化した場合" do
+      before do
+        create(:visit, place: create(:place, group: user.group, name: "江ノ島"), want_again: false)
+        sign_in user
+        get root_path
+      end
+
+      it "場所がない場合と同じ「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+        expect(shown_names).to be_empty
+        expect(response.body).to include("場所がありません")
+        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
+      end
+    end
+
     context "ログイン済みで場所が1件もない場合" do
       before do
         create(:place, group: create(:user).group)
         sign_in user
       end
 
-      it "「まだ場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
         get root_path
-        expect(response.body).to include("まだ場所がありません")
+        expect(response.body).to include("場所がありません")
         expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
