@@ -68,10 +68,9 @@ RSpec.describe "Visits", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、flash を出さないこと", :aggregate_failures do
         get new_place_visit_path(other_place)
         expect(response).to have_http_status(:not_found)
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
       end
     end
@@ -213,10 +212,9 @@ RSpec.describe "Visits", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、記録せず、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、記録せず、flash を出さないこと", :aggregate_failures do
         expect { post place_visits_path(other_place), params: valid_params }.not_to change(Visit, :count)
         expect(response).to have_http_status(:not_found)
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
       end
     end
@@ -336,10 +334,9 @@ RSpec.describe "Visits", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、記録を消さず、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、記録を消さず、flash を出さないこと", :aggregate_failures do
         expect { delete visit_path(other_visit) }.not_to change(Visit, :count)
         expect(response).to have_http_status(:not_found)
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
       end
     end

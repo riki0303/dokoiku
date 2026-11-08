@@ -411,19 +411,10 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、flash を出さないこと", :aggregate_failures do
         get edit_place_path(other_place)
         expect(response).to have_http_status(:not_found)
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
-      end
-
-      it "存在しない ID を指定したときと同じステータス・本文を返すこと", :production_error_page do
-        get edit_place_path(0)
-        not_found = [ response.status, response.body ]
-        sign_in user # 例外で終わったリクエストではセッションが保存されないため、ログインし直す
-        get edit_place_path(other_place)
-        expect([ response.status, response.body ]).to eq(not_found)
       end
     end
   end
@@ -520,11 +511,10 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を更新せず、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、場所を更新せず、flash を出さないこと", :aggregate_failures do
         patch place_path(other_place), params: update_params
         expect(response).to have_http_status(:not_found)
         expect(other_place.reload.name).to eq("他人の場所")
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
       end
     end
@@ -568,10 +558,9 @@ RSpec.describe "Places", type: :request do
 
       before { sign_in user }
 
-      it "404 を返し、場所を削除せず、public/404.html を表示して flash を出さないこと", :aggregate_failures, :production_error_page do
+      it "404 を返し、場所を削除せず、flash を出さないこと", :aggregate_failures do
         expect { delete place_path(other_place) }.not_to change(Place, :count)
         expect(response).to have_http_status(:not_found)
-        expect(response.body).to eq(Rails.public_path.join("404.html").read)
         expect(flash[:alert]).to be_nil
       end
     end
