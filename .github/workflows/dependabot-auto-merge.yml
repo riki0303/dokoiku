@@ -1,0 +1,37 @@
+name: Dependabot auto-merge
+
+# Dependabot のパッチ・マイナー更新 PR に自動マージを予約する（Issue #86）
+# 実際の merge は GitHub の auto-merge が、ルールセットの必須チェック（CI のうち brakeman / rubocop / rails_best_practices / rspec の 4 ジョブ）の成功を待って行う。
+# 設定手順は docs/dependabot-auto-merge.md を参照
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+# 既定ではすべての権限を外し、必要な権限はジョブ単位で与える
+permissions: {}
+
+jobs:
+  auto-merge:
+    # Dependabot が作った PR だけ対象にする（人の PR やフォークでは動かさない）
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'riki0303/dokoiku'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # メジャー更新は今まで通り手でレビューするため、パッチ・マイナーだけ予約する。
+      # update-type が取れない PR（空）も予約しない（安全側に倒す）。
+      # merge 方式はこれまでの運用に合わせて merge commit
+      - name: Enable auto-merge for patch and minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
