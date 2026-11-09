@@ -84,10 +84,10 @@ RSpec.describe "Decisions", type: :system do
       expect(page).to have_css("h1", text: "行きたい場所")
     end
 
-    it "ナビバーから訪問済み一覧へ移動できること", :aggregate_failures do
-      within("nav.navbar") { click_link "訪問済み" }
+    it "ナビバーから訪問記録の一覧へ移動できること", :aggregate_failures do
+      within("nav.navbar") { click_link "訪問記録" }
       expect(page).to have_current_path(visits_path)
-      expect(page).to have_css("h1", text: "訪問済み")
+      expect(page).to have_css("h1", text: "訪問記録")
     end
 
     it "ナビバーの「今日どこ行く？」から今日決める画面（見出し「今日どこ行く？」）へ移動できること", :aggregate_failures do

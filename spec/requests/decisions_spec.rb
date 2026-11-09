@@ -130,16 +130,16 @@ RSpec.describe "Decisions", type: :request do
         expect(response.parsed_body.at_css("meta[name='turbo-prefetch']")).to be_nil
       end
 
-      it "ナビバーのメニューを「今日どこ行く？」「行きたい場所」「訪問済み」・ユーザー名の順に表示すること" do
+      it "ナビバーのメニューを「今日どこ行く？」「行きたい場所」「訪問記録」・ユーザー名の順に表示すること" do
         get root_path
         items = response.parsed_body.css("#navbar-menu .navbar-nav > li > .nav-link").map { |item| item.text.strip }
-        expect(items).to eq([ "今日どこ行く？", "行きたい場所", "訪問済み", user.name ])
+        expect(items).to eq([ "今日どこ行く？", "行きたい場所", "訪問記録", user.name ])
       end
 
-      it "ナビバーのリンク先を今日決める・行きたい場所・訪問済みにすること" do
+      it "ナビバーのリンク先を今日決める・行きたい場所・訪問記録にすること" do
         get root_path
         links = response.parsed_body.css("#navbar-menu .navbar-nav > li > a.nav-link").map { |link| [ link.text, link["href"] ] }
-        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "行きたい場所", places_path ], [ "訪問済み", visits_path ] ])
+        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "行きたい場所", places_path ], [ "訪問記録", visits_path ] ])
       end
 
       it "ナビバーのユーザー名をドロップダウンのトグルにすること", :aggregate_failures do

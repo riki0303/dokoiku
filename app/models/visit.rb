@@ -3,7 +3,7 @@
 class Visit < ApplicationRecord
   belongs_to :place
 
-  # 訪問済み一覧や完了メッセージで場所の情報を出すため（visit.place_name のように呼ぶ）
+  # 訪問記録の一覧や完了メッセージで場所の情報を出すため（visit.place_name のように呼ぶ）
   delegate :name, :note, :distance, to: :place, prefix: true
 
   # 明日以降の日付は記録させない（今日は Date.current で、config.time_zone の日本時間で判定する）。

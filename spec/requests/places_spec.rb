@@ -119,8 +119,8 @@ RSpec.describe "Places", type: :request do
         expect(classes).to eq([ "btn btn-link btn-sm py-0" ])
       end
 
-      # 訪問済み一覧へはナビバーから移れるため、画面内には置かない
-      it "画面内に訪問済み一覧へのリンクを表示しないこと" do
+      # 訪問記録の一覧へはナビバーから移れるため、画面内には置かない
+      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
         get places_path
         expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
@@ -165,7 +165,7 @@ RSpec.describe "Places", type: :request do
         expect(response.parsed_body.css("main a.btn-sm[href='#{new_place_path}']")).to be_empty
       end
 
-      it "画面内に訪問済み一覧へのリンクを表示しないこと" do
+      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
         expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
     end

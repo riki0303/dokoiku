@@ -279,7 +279,7 @@ RSpec.describe "Visits", type: :request do
 
       # 行きたい場所へはナビバーから移れるため、画面内には置かない
       it "見出しを表示し、画面内に行きたい場所へのリンクを表示しないこと", :aggregate_failures do
-        expect(response.parsed_body.at_css("h1").text).to eq("訪問済み")
+        expect(response.parsed_body.at_css("h1").text).to eq("訪問記録")
         expect(response.parsed_body.at_css("main a[href='#{places_path}']")).to be_nil
       end
     end
@@ -315,7 +315,7 @@ RSpec.describe "Visits", type: :request do
         expect { delete visit_path(visit) }.to change(Visit, :count).by(-1)
       end
 
-      it "303 で訪問済み一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
+      it "303 で訪問記録の一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
         delete visit_path(visit)
         expect(response).to have_http_status(:see_other)
         expect(response).to redirect_to(visits_path)

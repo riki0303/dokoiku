@@ -62,9 +62,9 @@ RSpec.describe "Navbar", type: :system do
       expect(page).to have_css("h1", text: "アカウント設定")
     end
 
-    it "ハンバーガーメニュー →「訪問済み」で訪問済み一覧へ移動できること" do
+    it "ハンバーガーメニュー →「訪問記録」で訪問記録の一覧へ移動できること" do
       open_hamburger_menu
-      within("nav.navbar") { click_link "訪問済み" }
+      within("nav.navbar") { click_link "訪問記録" }
       expect(page).to have_current_path(visits_path)
     end
 
