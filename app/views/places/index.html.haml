@@ -1,6 +1,6 @@
-- content_for :title, "場所一覧"
+- content_for :title, "行きたい場所"
 .d-flex.justify-content-between.align-items-center.mb-3
-  %h1.h3.mb-0 場所一覧
+  %h1.h3.mb-0 行きたい場所
   - if @any_places
     = link_to "場所を登録する", new_place_path, class: "btn btn-primary btn-sm"
 - if @any_places
@@ -22,12 +22,9 @@
           .fw-bold= place.name
           .d-flex.align-items-center.gap-1.flex-shrink-0
             %span.badge.text-bg-secondary= distance_label(place.distance)
-            = link_to "行った", new_place_visit_path(place), class: "btn btn-link btn-sm py-0"
+            = link_to "訪問を記録", new_place_visit_path(place), class: "btn btn-link btn-sm py-0"
             = link_to "編集", edit_place_path(place), class: "btn btn-link btn-sm py-0"
         .text-body-secondary= place.note
 - else
   %p.text-body-secondary 場所がありません
   = link_to "場所を登録する", new_place_path, class: "btn btn-outline-primary"
--# 行きたい場所が0件でも（すべて消化済みでも）、訪問済みの一覧へ移れるようにする
-.text-center.mt-4
-  = link_to "訪問済みの場所を見る", visits_path

@@ -100,6 +100,12 @@ RSpec.describe "Users::Registrations", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("アカウント削除")
       end
+
+      it "見出しとタイトルに「アカウント設定」を表示すること", :aggregate_failures do
+        get edit_user_registration_path
+        expect(response.parsed_body.at_css("h1")&.text).to eq("アカウント設定")
+        expect(response.parsed_body.at_css("title")&.text).to include("アカウント設定")
+      end
     end
   end
 

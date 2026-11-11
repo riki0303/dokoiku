@@ -78,10 +78,16 @@ RSpec.describe "Decisions", type: :system do
       expect(shown_names).to eq(first)
     end
 
-    it "ナビバーから場所一覧へ移動できること", :aggregate_failures do
-      within("nav.navbar") { click_link "場所一覧" }
+    it "ナビバーから行きたい場所へ移動できること", :aggregate_failures do
+      within("nav.navbar") { click_link "行きたい場所" }
       expect(page).to have_current_path(places_path)
-      expect(page).to have_css("h1", text: "場所一覧")
+      expect(page).to have_css("h1", text: "行きたい場所")
+    end
+
+    it "ナビバーから訪問記録の一覧へ移動できること", :aggregate_failures do
+      within("nav.navbar") { click_link "訪問記録" }
+      expect(page).to have_current_path(visits_path)
+      expect(page).to have_css("h1", text: "訪問記録")
     end
 
     it "ナビバーの「今日どこ行く？」から今日決める画面（見出し「今日どこ行く？」）へ移動できること", :aggregate_failures do
@@ -91,7 +97,7 @@ RSpec.describe "Decisions", type: :system do
       expect(page).to have_css("h1", text: "今日どこ行く？")
     end
 
-    it "場所一覧の「場所を登録する」から登録画面へ移動できること" do
+    it "行きたい場所の「場所を登録する」から登録画面へ移動できること" do
       visit places_path
       within("main") { click_link "場所を登録する" }
       expect(page).to have_current_path(new_place_path)

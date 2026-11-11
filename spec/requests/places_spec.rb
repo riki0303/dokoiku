@@ -77,10 +77,10 @@ RSpec.describe "Places", type: :request do
         expect(links).to eq(expected)
       end
 
-      it "見出しとタイトルに「場所一覧」を表示すること", :aggregate_failures do
+      it "見出しとタイトルに「行きたい場所」を表示すること", :aggregate_failures do
         get places_path
-        expect(response.parsed_body.at_css("h1")&.text).to eq("場所一覧")
-        expect(response.parsed_body.at_css("title")&.text).to include("場所一覧")
+        expect(response.parsed_body.at_css("h1")&.text).to eq("行きたい場所")
+        expect(response.parsed_body.at_css("title")&.text).to include("行きたい場所")
       end
 
       it "見出し横に登録画面へのリンクを表示すること" do
@@ -109,19 +109,20 @@ RSpec.describe "Places", type: :request do
         get places_path
         links = response.parsed_body.css(".list-group-item a").map { |link| [ link.text, link["href"] ] }
         places = Place.where(group: user.group).order(created_at: :desc)
-        expected = places.flat_map { |place| [ [ "行った", new_place_visit_path(place) ], [ "編集", edit_place_path(place) ] ] }
+        expected = places.flat_map { |place| [ [ "訪問を記録", new_place_visit_path(place) ], [ "編集", edit_place_path(place) ] ] }
         expect(links).to eq(expected)
       end
 
-      it "「行った」リンクを「編集」リンクと同じ見た目にすること" do
+      it "「訪問を記録」リンクを「編集」リンクと同じ見た目にすること" do
         get places_path
         classes = response.parsed_body.css(".list-group-item a").map { |link| link["class"] }.uniq
         expect(classes).to eq([ "btn btn-link btn-sm py-0" ])
       end
 
-      it "訪問済み一覧へのリンクを表示すること" do
+      # 訪問記録の一覧へはナビバーから移れるため、画面内には置かない
+      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
         get places_path
-        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_present
+        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
     end
 
@@ -164,8 +165,8 @@ RSpec.describe "Places", type: :request do
         expect(response.parsed_body.css("main a.btn-sm[href='#{new_place_path}']")).to be_empty
       end
 
-      it "訪問済み一覧へのリンクを表示すること" do
-        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_present
+      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
+        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
     end
 
@@ -273,9 +274,9 @@ RSpec.describe "Places", type: :request do
         expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
       end
 
-      it "一覧へのリンクを表示すること" do
+      it "行きたい場所に戻るリンクを表示すること" do
         get new_place_path
-        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("一覧を見る")
+        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
       end
     end
   end
@@ -401,8 +402,8 @@ RSpec.describe "Places", type: :request do
         expect(delete_form.ancestors("form")).to be_empty
       end
 
-      it "一覧へ戻るリンクを表示すること" do
-        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("一覧に戻る")
+      it "行きたい場所に戻るリンクを表示すること" do
+        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
       end
     end
 

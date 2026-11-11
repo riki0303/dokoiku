@@ -5,7 +5,7 @@ RSpec.describe "Visits", type: :request do
   let(:place) { create(:place, group: user.group, name: "江ノ島") }
   let(:valid_params) { { visit: { visited_on: Date.current.iso8601, want_again: "false" } } }
 
-  # 場所一覧に出ている場所の名前
+  # 行きたい場所の画面に出ている場所の名前
   def wanted_place_names
     get places_path
     response.parsed_body.css(".list-group-item .fw-bold").map(&:text)
@@ -57,9 +57,9 @@ RSpec.describe "Visits", type: :request do
         expect(labels.map { |label| label.text.sub("必須", "").strip }).to eq(%w[訪問日 また行きたいか])
       end
 
-      it "送信ボタンと一覧に戻るリンクを表示すること", :aggregate_failures do
+      it "送信ボタンと行きたい場所に戻るリンクを表示すること", :aggregate_failures do
         expect(html.at_css("input[type=submit]")["value"]).to eq("記録する")
-        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("一覧に戻る")
+        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
       end
     end
 
@@ -116,14 +116,14 @@ RSpec.describe "Visits", type: :request do
         expect(Visit.last).to have_attributes(place: place, visited_on: Date.current, want_again: false)
       end
 
-      it "場所一覧にリダイレクトし、訪問済みにしたことを表示すること", :aggregate_failures do
+      it "行きたい場所にリダイレクトし、訪問済みにしたことを表示すること", :aggregate_failures do
         post place_visits_path(place), params: valid_params
         expect(response).to redirect_to(places_path)
         follow_redirect!
         expect(response.body).to include("江ノ島を訪問済みにしました")
       end
 
-      it "場所一覧から消えること" do
+      it "行きたい場所から消えること" do
         create(:place, group: user.group, name: "鎌倉")
         post place_visits_path(place), params: valid_params
         expect(wanted_place_names).to eq(%w[鎌倉])
@@ -140,14 +140,14 @@ RSpec.describe "Visits", type: :request do
         expect(Visit.last).to have_attributes(place: place, visited_on: 3.days.ago.to_date, want_again: true)
       end
 
-      it "場所一覧にリダイレクトし、行きたい場所に残ることを表示すること", :aggregate_failures do
+      it "行きたい場所にリダイレクトし、行きたい場所に残ることを表示すること", :aggregate_failures do
         post place_visits_path(place), params: params
         expect(response).to redirect_to(places_path)
         follow_redirect!
         expect(response.body).to include("江ノ島の訪問を記録しました（行きたい場所に残ります）")
       end
 
-      it "場所一覧に残ること" do
+      it "行きたい場所に残ること" do
         post place_visits_path(place), params: params
         expect(wanted_place_names).to eq(%w[江ノ島])
       end
@@ -277,9 +277,10 @@ RSpec.describe "Visits", type: :request do
         expect(form.at_css("button").text).to eq("取り消す")
       end
 
-      it "見出しと場所一覧へのリンクを表示すること", :aggregate_failures do
-        expect(response.parsed_body.at_css("h1").text).to eq("訪問済み")
-        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("場所一覧")
+      # 行きたい場所へはナビバーから移れるため、画面内には置かない
+      it "見出しを表示し、画面内に行きたい場所へのリンクを表示しないこと", :aggregate_failures do
+        expect(response.parsed_body.at_css("h1").text).to eq("訪問記録")
+        expect(response.parsed_body.at_css("main a[href='#{places_path}']")).to be_nil
       end
     end
 
@@ -314,7 +315,7 @@ RSpec.describe "Visits", type: :request do
         expect { delete visit_path(visit) }.to change(Visit, :count).by(-1)
       end
 
-      it "303 で訪問済み一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
+      it "303 で訪問記録の一覧にリダイレクトし、完了メッセージを表示すること", :aggregate_failures do
         delete visit_path(visit)
         expect(response).to have_http_status(:see_other)
         expect(response).to redirect_to(visits_path)
@@ -322,7 +323,7 @@ RSpec.describe "Visits", type: :request do
         expect(response.body).to include("江ノ島の訪問記録を取り消しました")
       end
 
-      it "「いいえ」の記録を取り消すと、場所一覧に戻ること", :aggregate_failures do
+      it "「いいえ」の記録を取り消すと、行きたい場所に戻ること", :aggregate_failures do
         expect(wanted_place_names).to be_empty
         delete visit_path(visit)
         expect(wanted_place_names).to eq(%w[江ノ島])
