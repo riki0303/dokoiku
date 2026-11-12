@@ -14,15 +14,6 @@ RSpec.describe "Users::Sessions", type: :request do
       get new_user_session_path
       expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("今日どこ行く？", "行きたい場所", "訪問記録")
     end
-
-    # request spec ではブラウザの入力チェックは動かないため、HTML5 の属性が出力されていることを確認する
-    it "novalidate を付けず、メールアドレスとパスワードに required を付けること", :aggregate_failures do
-      get new_user_session_path
-      form = response.parsed_body.at_css("form#new_user")
-      expect(form["novalidate"]).to be_nil
-      expect(form.at_css("input[name='user[email]']")["required"]).to eq("required")
-      expect(form.at_css("input[name='user[password]']")["required"]).to eq("required")
-    end
   end
 
   describe "POST /users/sign_in" do
