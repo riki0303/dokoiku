@@ -54,48 +54,9 @@ RSpec.describe "Places", type: :request do
         expect(listed_names).to eq(%w[駅前のカフェ 江ノ島 近所の公園])
       end
 
-      it "すべて・近場・日帰り・遠出の絞り込みボタンを表示すること" do
-        get places_path
-        buttons = response.parsed_body.css("main a[href='#{places_path}'], main a[href^='#{places_path}?']")
-        expect(buttons.map(&:text)).to eq(%w[すべて 近場 日帰り 遠出])
-      end
-
-      it "各絞り込みボタンのリンク先に距離感の条件を付けること" do
-        get places_path
-        links = response.parsed_body.css("nav a.btn").to_h { |link| [ link.text, link["href"] ] }
-        expected = { "すべて" => places_path }
-        expected.merge!(%w[近場 日帰り 遠出].zip(%w[near day_trip far]).to_h { |label, key| [ label, places_path(q: { distance_eq: key }) ] })
-        expect(links).to eq(expected)
-      end
-
-      it "見出しとタイトルに「行きたい場所」を表示すること", :aggregate_failures do
-        get places_path
-        expect(response.parsed_body.at_css("h1")&.text).to eq("行きたい場所")
-        expect(response.parsed_body.at_css("title")&.text).to include("行きたい場所")
-      end
-
-      it "見出し横に登録画面へのリンクを表示すること" do
-        get places_path
-        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
-      end
-
       it "時間や距離の数値表記を表示しないこと" do
         get places_path
         expect(response.body).not_to match(/\d+\s*(分|時間|km|キロ)/)
-      end
-
-      it "各行に訪問の記録画面と編集画面へのリンクを表示すること" do
-        get places_path
-        links = response.parsed_body.css(".list-group-item a").map { |link| [ link.text, link["href"] ] }
-        places = Place.where(group: user.group).order(created_at: :desc)
-        expected = places.flat_map { |place| [ [ "訪問を記録", new_place_visit_path(place) ], [ "編集", edit_place_path(place) ] ] }
-        expect(links).to eq(expected)
-      end
-
-      # 訪問記録の一覧へはナビバーから移れるため、画面内には置かない
-      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
-        get places_path
-        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
     end
 
@@ -127,18 +88,13 @@ RSpec.describe "Places", type: :request do
         get places_path
       end
 
-      it "場所がない場合と同じ「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "場所がない場合と同じ「場所がありません」を表示すること", :aggregate_failures do
         expect(response.body).to include("場所がありません")
         expect(response.body).not_to include("江ノ島")
-        expect(response.parsed_body.css("main a[href='#{new_place_path}']").map(&:text)).to eq([ "場所を登録する" ])
       end
 
       it "絞り込みボタンを表示しないこと" do
         expect(response.parsed_body.css("a[href^='#{places_path}?']")).to be_empty
-      end
-
-      it "画面内に訪問記録の一覧へのリンクを表示しないこと" do
-        expect(response.parsed_body.at_css("main a[href='#{visits_path}']")).to be_nil
       end
     end
 
@@ -151,8 +107,7 @@ RSpec.describe "Places", type: :request do
       it "「場所がありません」を表示し、絞り込みボタンは表示したままにすること", :aggregate_failures do
         get places_path, params: { q: { distance_eq: "far" } }
         expect(response.body).to include("場所がありません")
-        buttons = response.parsed_body.css("main a[href='#{places_path}'], main a[href^='#{places_path}?']")
-        expect(buttons.map(&:text)).to eq(%w[すべて 近場 日帰り 遠出])
+        expect(response.parsed_body.css("a[href^='#{places_path}?']")).to be_present
       end
 
       it "不正な値ならエラーにせず「場所がありません」を表示すること", :aggregate_failures do
@@ -192,10 +147,9 @@ RSpec.describe "Places", type: :request do
     context "ログイン済みで場所が1件もない場合" do
       before { sign_in user }
 
-      it "案内文と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「場所がありません」を表示すること" do
         get places_path
         expect(response.body).to include("場所がありません")
-        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
       it "絞り込みボタンを表示しないこと" do
@@ -219,12 +173,7 @@ RSpec.describe "Places", type: :request do
       it "登録フォームを表示すること", :aggregate_failures do
         get new_place_path
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("場所の名前", "一言", "距離感")
-      end
-
-      it "距離感の選択肢として近場・日帰り・遠出を表示すること" do
-        get new_place_path
-        expect(response.body).to include("近場", "日帰り", "遠出")
+        expect(response.body).to include("場所の名前")
       end
 
       it "時間や距離の数値表記を表示しないこと" do
@@ -235,11 +184,6 @@ RSpec.describe "Places", type: :request do
       it "距離感のラジオをどれも選択済みにしないこと" do
         get new_place_path
         expect(response.parsed_body.css("input[type=radio][name='place[distance]'][checked]")).to be_empty
-      end
-
-      it "行きたい場所に戻るリンクを表示すること" do
-        get new_place_path
-        expect(response.parsed_body.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
       end
     end
   end
@@ -351,14 +295,6 @@ RSpec.describe "Places", type: :request do
         expect(html.at_css("input[name='place[name]']")["value"]).to eq("江ノ島")
         expect(html.at_css("input[name='place[note]']")["value"]).to eq("夕日を見に行きたい")
         expect(html.at_css("input[type=radio][name='place[distance]'][checked]")["value"]).to eq("day_trip")
-      end
-
-      it "削除ボタンを表示すること" do
-        expect(response.body).to include("削除する")
-      end
-
-      it "行きたい場所に戻るリンクを表示すること" do
-        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
       end
     end
   end

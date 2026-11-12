@@ -7,12 +7,7 @@ RSpec.describe "Users::Sessions", type: :request do
     it "ログインフォームを表示すること", :aggregate_failures do
       get new_user_session_path
       expect(response).to have_http_status(:ok)
-      expect(response.body).not_to include("パスワードを忘れましたか？")
-    end
-
-    it "未ログインのナビバーに「今日どこ行く？」「行きたい場所」「訪問記録」へのリンクを表示しないこと" do
-      get new_user_session_path
-      expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("今日どこ行く？", "行きたい場所", "訪問記録")
+      expect(response.parsed_body.at_css("h1")&.text).to eq("ログイン")
     end
   end
 

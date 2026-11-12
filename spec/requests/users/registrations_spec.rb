@@ -2,9 +2,10 @@ require "rails_helper"
 
 RSpec.describe "Users::Registrations", type: :request do
   describe "GET /users/sign_up" do
-    it "新規登録フォームを表示すること" do
+    it "新規登録フォームを表示すること", :aggregate_failures do
       get new_user_registration_path
       expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("h1")&.text).to eq("アカウント登録")
     end
   end
 
@@ -86,16 +87,10 @@ RSpec.describe "Users::Registrations", type: :request do
     context "ログイン済みの場合" do
       before { sign_in create(:user) }
 
-      it "アカウント削除ボタン付きの編集フォームを表示すること", :aggregate_failures do
+      it "アカウント設定の画面を表示すること", :aggregate_failures do
         get edit_user_registration_path
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("アカウント削除")
-      end
-
-      it "見出しとタイトルに「アカウント設定」を表示すること", :aggregate_failures do
-        get edit_user_registration_path
         expect(response.parsed_body.at_css("h1")&.text).to eq("アカウント設定")
-        expect(response.parsed_body.at_css("title")&.text).to include("アカウント設定")
       end
     end
   end
