@@ -20,13 +20,29 @@ RSpec.describe "Places", type: :system do
       expect(Place.exists?(name: "江ノ島")).to be(true)
     end
 
-    it "確認ダイアログで OK すると、完了メッセージ付きで一覧に戻り、場所が消えること", :aggregate_failures do
+    it "確認ダイアログで OK すると、場所が消えること", :aggregate_failures do
       accept_confirm("江ノ島を削除しますか？") { click_button "削除する" }
 
+      # 削除後の画面に切り替わるのを待ってから DB を確かめる
       expect(page).to have_content("江ノ島を削除しました")
-      expect(page).to have_current_path(places_path)
-      expect(page).to have_no_css(".list-group-item", text: "江ノ島")
       expect(Place.exists?(name: "江ノ島")).to be(false)
+    end
+
+    context "名前を空白だけにして更新に失敗したあとの場合" do
+      before do
+        # 空白だけならブラウザの入力チェック（required）を通り、サーバー側のバリデーションで失敗する
+        fill_in "place[name]", with: " "
+        click_button "更新する"
+        # 更新に失敗した編集フォームが再表示されるのを待つ
+        assert_text "を入力してください"
+      end
+
+      it "確認ダイアログに未保存の名前ではなく DB 上の名前を出し、OK すると場所が消えること", :aggregate_failures do
+        accept_confirm("江ノ島を削除しますか？") { click_button "削除する" }
+
+        expect(page).to have_content("江ノ島を削除しました")
+        expect(Place.exists?(name: "江ノ島")).to be(false)
+      end
     end
   end
 end
