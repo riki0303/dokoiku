@@ -18,7 +18,7 @@
           .card-body.d-flex.flex-column
             -# 場所の名前を一言より目立たせる
             %h2.fs-4.fw-bold.card-title.mb-2= place.name
-            %p.card-text.mb-2= place.note
+            %p.card-text.mb-2.text-break= link_urls(place.note)
             .d-flex.flex-wrap.align-items-center.gap-2.mb-3.small.text-body-secondary
               %span.badge.text-bg-secondary= distance_label(place.distance)
               %span= registered_ago(place)
