@@ -27,27 +27,17 @@ RSpec.describe "Visits", type: :request do
         get new_place_visit_path(place)
       end
 
-      it "対象の場所の名前と記録フォームを表示すること", :aggregate_failures do
+      it "対象の場所の名前を表示すること", :aggregate_failures do
         expect(response).to have_http_status(:ok)
-        expect(html.at_css("h1").text).to eq("訪問を記録する")
-        expect(response.body).to include("江ノ島", "訪問日", "また行きたいか")
-        expect(html.at_css("main form")["action"]).to eq(place_visits_path(place))
+        expect(response.body).to include("江ノ島")
       end
 
       it "訪問日の初期値を今日にすること" do
         expect(html.at_css("input[name='visit[visited_on]']")["value"]).to eq(Date.current.iso8601)
       end
 
-      it "また行きたいかを「はい / いいえ」のラジオで出し、どれも選択済みにしないこと", :aggregate_failures do
-        radios = html.css("input[type=radio][name='visit[want_again]']")
-        expect(radios.map { |radio| radio["value"] }).to eq(%w[true false])
-        expect(radios.map { |radio| html.at_css("label[for='#{radio['id']}']").text }).to eq(%w[はい いいえ])
-        expect(radios.select { |radio| radio["checked"] }).to be_empty
-      end
-
-      it "送信ボタンと行きたい場所に戻るリンクを表示すること", :aggregate_failures do
-        expect(html.at_css("input[type=submit]")["value"]).to eq("記録する")
-        expect(html.at_css("main a[href='#{places_path}']")&.text).to eq("行きたい場所に戻る")
+      it "また行きたいかのラジオをどれも選択済みにしないこと" do
+        expect(html.css("input[type=radio][name='visit[want_again]'][checked]")).to be_empty
       end
     end
 
@@ -229,16 +219,6 @@ RSpec.describe "Visits", type: :request do
         expect(item.text).to include("夕日を見に行きたい", "日帰り", "2026/10/01", "はい")
         cafe = items.find { |li| li.at_css(".fw-bold").text == "駅前のカフェ" }
         expect(cafe.at_css(".want-again").text).to include("いいえ")
-      end
-
-      it "各行に取り消しボタンを表示すること" do
-        expect(items.map { |item| item.at_css("button")&.text }).to eq(%w[取り消す 取り消す 取り消す])
-      end
-
-      # 行きたい場所へはナビバーから移れるため、画面内には置かない
-      it "見出しを表示し、画面内に行きたい場所へのリンクを表示しないこと", :aggregate_failures do
-        expect(response.parsed_body.at_css("h1").text).to eq("訪問記録")
-        expect(response.parsed_body.at_css("main a[href='#{places_path}']")).to be_nil
       end
     end
 

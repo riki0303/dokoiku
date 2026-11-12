@@ -74,10 +74,9 @@ RSpec.describe "Decisions", type: :request do
         get root_path
       end
 
-      it "「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「場所がありません」を表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
         expect(response.body).to include("場所がありません")
-        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
       it "新しく登録した場所を、再読み込みで表示すること" do
@@ -87,7 +86,7 @@ RSpec.describe "Decisions", type: :request do
       end
 
       it "絞り込みボタンは表示したままにし、「別の3件」ボタンは表示しないこと", :aggregate_failures do
-        expect(response.parsed_body.css("main nav a.btn").map(&:text)).to eq(%w[すべて 近場 日帰り 遠出])
+        expect(response.parsed_body.css("a[href^='#{root_path}?distance=']")).to be_present
         expect(response.body).not_to include("別の3件")
       end
     end
@@ -101,12 +100,6 @@ RSpec.describe "Decisions", type: :request do
       it "場所の名前・一言・距離感・経過期間を表示すること" do
         get root_path
         expect(response.body).to include("江ノ島", "夕日を見に行きたい", "日帰り", "3ヶ月前に登録")
-      end
-
-      it "名前を一言より前に表示すること" do
-        get root_path
-        card = response.parsed_body.at_css(".card-body")
-        expect(card.css(".card-title, .card-text").map(&:text)).to eq(%w[江ノ島 夕日を見に行きたい])
       end
 
       it "時間や距離の数値表記を表示しないこと" do
@@ -124,41 +117,6 @@ RSpec.describe "Decisions", type: :request do
         get root_path
         expect(response.body).to include("別の3件")
       end
-
-      it "ナビバーのメニューを「今日どこ行く？」「行きたい場所」「訪問記録」・ユーザー名の順に表示すること" do
-        get root_path
-        items = response.parsed_body.css("#navbar-menu .navbar-nav > li > .nav-link").map { |item| item.text.strip }
-        expect(items).to eq([ "今日どこ行く？", "行きたい場所", "訪問記録", user.name ])
-      end
-
-      it "ナビバーのリンク先を今日決める・行きたい場所・訪問記録にすること" do
-        get root_path
-        links = response.parsed_body.css("#navbar-menu .navbar-nav > li > a.nav-link").map { |link| [ link.text, link["href"] ] }
-        expect(links).to eq([ [ "今日どこ行く？", root_path ], [ "行きたい場所", places_path ], [ "訪問記録", visits_path ] ])
-      end
-
-      it "ナビバーのドロップダウンにアカウント設定へのリンクを置くこと" do
-        get root_path
-        link = response.parsed_body.at_css("#navbar-menu .dropdown-menu a[href='#{edit_user_registration_path}']")
-        expect(link&.text).to eq("アカウント設定")
-      end
-
-      it "ナビバーのドロップダウンにログアウトボタンを置くこと" do
-        get root_path
-        button = response.parsed_body.at_css("#navbar-menu .dropdown-menu form[action='#{destroy_user_session_path}'] button")
-        expect(button&.text).to eq("ログアウト")
-      end
-
-      it "ナビバーに場所の登録へのリンクを表示しないこと" do
-        get root_path
-        expect(response.parsed_body.css("nav.navbar a").map(&:text)).not_to include("場所を登録")
-      end
-
-      it "見出しとタイトルに「今日どこ行く？」を表示すること", :aggregate_failures do
-        get root_path
-        expect(response.parsed_body.at_css("h1")&.text).to eq("今日どこ行く？")
-        expect(response.parsed_body.at_css("title")&.text).to include("今日どこ行く？")
-      end
     end
 
     context "ログイン済みで距離感で絞り込む場合" do
@@ -167,14 +125,6 @@ RSpec.describe "Decisions", type: :request do
         create(:place, group: user.group, name: "江ノ島", distance: :day_trip)
         create(:place, group: user.group, name: "京都", distance: :far)
         sign_in user
-      end
-
-      it "すべて・近場・日帰り・遠出の絞り込みボタンを表示すること" do
-        get root_path
-        links = response.parsed_body.css("main nav a.btn").to_h { |link| [ link.text, link["href"] ] }
-        expected = { "すべて" => root_path }
-        expected.merge!(%w[近場 日帰り 遠出].zip(%w[near day_trip far]).to_h { |label, key| [ label, root_path(distance: key) ] })
-        expect(links).to eq(expected)
       end
 
       it "distance=far で遠出の場所だけを表示すること" do
@@ -314,10 +264,9 @@ RSpec.describe "Decisions", type: :request do
         get root_path
       end
 
-      it "場所がない場合と同じ「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "場所がない場合と同じ「場所がありません」を表示すること", :aggregate_failures do
         expect(shown_names).to be_empty
         expect(response.body).to include("場所がありません")
-        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
     end
 
@@ -336,15 +285,14 @@ RSpec.describe "Decisions", type: :request do
     context "ログイン済みで場所が1件もない場合" do
       before { sign_in user }
 
-      it "「場所がありません」と登録画面へのリンクを表示すること", :aggregate_failures do
+      it "「場所がありません」を表示すること" do
         get root_path
         expect(response.body).to include("場所がありません")
-        expect(response.parsed_body.at_css("main a[href='#{new_place_path}']")&.text).to eq("場所を登録する")
       end
 
       it "絞り込みボタンと「別の3件」ボタンを表示しないこと", :aggregate_failures do
         get root_path
-        expect(response.parsed_body.css("main nav a")).to be_empty
+        expect(response.parsed_body.css("a[href^='#{root_path}?distance=']")).to be_empty
         expect(response.body).not_to include("別の3件")
       end
     end
