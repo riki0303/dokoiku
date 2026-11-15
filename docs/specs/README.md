@@ -10,6 +10,7 @@
 | [places.md](places.md) | 行きたい場所の登録・一覧・編集・削除（7-1 / 7-2 / 7-5） |
 | [decisions.md](decisions.md) | 今日決める画面と提案ロジック（7-3 / 8） |
 | [visits.md](visits.md) | 訪問記録（7-4） |
+| [invitations.md](invitations.md) | 招待（7-6） |
 
 ## 分け方
 

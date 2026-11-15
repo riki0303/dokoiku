@@ -1,0 +1,12 @@
+- content_for :title, "招待リンク"
+.row.justify-content-center
+  .col-md-8.col-lg-6
+    %h1.h3.mb-3 招待リンクを発行しました
+    %p このリンクを一緒に使う人に送ってください。
+    .input-group.mb-2{ data: { controller: "clipboard" } }
+      -# 書き換えさせず、選択してコピーもできるよう読み取り専用の入力欄に出す
+      %input.form-control{ type: "text", value: invitation_acceptance_url(@invitation.token), readonly: true,
+        aria: { label: "招待リンク" }, data: { clipboard_target: "source" } }
+      %button.btn.btn-primary{ type: "button", data: { clipboard_target: "button", action: "clipboard#copy" } } コピー
+    %p.small.text-body-secondary
+      #{Invitation.human_attribute_name(:expires_at)}：#{l(@invitation.expires_at, format: :long)}（1回使うと使えなくなります）

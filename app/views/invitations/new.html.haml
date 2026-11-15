@@ -1,0 +1,9 @@
+- content_for :title, "メンバーを招待"
+.row.justify-content-center
+  .col-md-8.col-lg-6
+    %h1.h3.mb-3 メンバーを招待
+    %p 招待リンクを発行して、一緒に使う人に送ってください。リンクから参加した人とは、行きたい場所を共有できます。
+    %ul.text-body-secondary.mb-4
+      %li リンクは1回使うと使えなくなります。さらに招待するときは、新しいリンクを発行してください
+      %li 使われなくても、発行から#{Invitation::EXPIRES_IN.in_hours.to_i}時間で使えなくなります
+    = button_to "招待リンクを発行する", invitations_path, class: "btn btn-primary w-100"

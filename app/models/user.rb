@@ -4,6 +4,8 @@ class User < ApplicationRecord
 
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
+  # 招待には inviter_id の外部キーがあるため、退会時に一緒に消さないとユーザーを削除できない
+  has_many :sent_invitations, class_name: "Invitation", foreign_key: :inviter_id, inverse_of: :inviter, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 50 }
 
