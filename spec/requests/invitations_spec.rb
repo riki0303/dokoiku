@@ -51,7 +51,8 @@ RSpec.describe "Invitations", type: :request do
   end
 
   describe "GET /invitations/:id" do
-    let(:invitation) { create(:invitation, inviter: user) }
+    # 日本時間で表示していることを確かめるため、有効期限は UTC で日付がずれる固定の時刻にする
+    let(:invitation) { create(:invitation, inviter: user, expires_at: Time.utc(2026, 11, 18, 0, 5)) }
 
     context "未ログインの場合" do
       it "ログインページにリダイレクトすること" do
@@ -72,7 +73,7 @@ RSpec.describe "Invitations", type: :request do
       end
 
       it "有効期限を日本時間で表示すること" do
-        expect(response.body).to include(I18n.l(invitation.expires_at, format: :long))
+        expect(response.body).to include("2026/11/18 09:05")
       end
     end
   end

@@ -11,7 +11,8 @@ class InvitationAcceptancesController < ApplicationController
       # すでにメンバーなら参加済みと伝えるだけにする（リンクは使用済みにしない）
       render :joined
     else
-      # 参加すると今のグループの場所が消化済みも含めてすべて移るため、件数は全件で数える
+      # 参加すると今のグループの場所が消化済みも含めてすべて移るため、件数は全件で数える。
+      # 移すのは今のグループ（current_group）の場所なので、所属グループ全体を返す policy_scope ではなく current_group から数える
       @places_count = current_group.places.count
     end
   end
