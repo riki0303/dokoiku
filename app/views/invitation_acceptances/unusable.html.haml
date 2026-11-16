@@ -1,0 +1,5 @@
+- content_for :title, "このリンクは使えません"
+.row.justify-content-center
+  .col-md-8.col-lg-6
+    %h1.h3.mb-3 このリンクは使えません
+    %p.text-body-secondary 招待リンクは1回使うか、発行から#{Invitation::EXPIRES_IN.in_hours.to_i}時間たつと使えなくなります。招待した人に新しいリンクを発行してもらってください。

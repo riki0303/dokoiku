@@ -14,13 +14,15 @@
             = link_to "行きたい場所", places_path, class: "nav-link"
           %li.nav-item
             = link_to "訪問記録", visits_path, class: "nav-link"
-          -# 名前だけでは押した先が分からないため、アカウント設定とログアウトをまとめたドロップダウンにする
+          -# 名前だけでは押した先が分からないため、招待・アカウント設定・ログアウトをまとめたドロップダウンにする
           -# 押してもページ移動しないので a ではなく button にする
           %li.nav-item.dropdown
             %button.nav-link.dropdown-toggle{ type: "button", data: { bs_toggle: "dropdown" }, aria: { expanded: "false" } }
               = current_user.name
             -# md 以上で右端からはみ出さないよう右寄せにし、暗いナビバーに合わせてメニューも暗い配色にする
             %ul.dropdown-menu.dropdown-menu-end{ data: { bs_theme: "dark" } }
+              %li
+                = link_to "メンバーを招待", new_invitation_path, class: "dropdown-item"
               %li
                 = link_to "アカウント設定", edit_user_registration_path, class: "dropdown-item"
               %li

@@ -11,6 +11,10 @@ Rails.application.routes.draw do
   resource :decision, only: [] do
     post :redraw
   end
+  # 招待リンクを発行する側。発行後は show でリンクを表示する
+  resources :invitations, only: %i[show new create]
+  # 招待された側がリンクを開く画面。URL には id ではなく推測できないトークンを使う
+  get "invite/:token", to: "invitation_acceptances#show", as: :invitation_acceptance
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

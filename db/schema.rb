@@ -10,13 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_020914) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "groups", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.bigint "group_id", null: false
+    t.bigint "inviter_id", null: false
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id"], name: "index_invitations_on_group_id"
+    t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
+    t.index ["token"], name: "index_invitations_on_token", unique: true
   end
 
   create_table "memberships", force: :cascade do |t|
@@ -228,6 +241,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_020914) do
     t.index ["place_id"], name: "index_visits_on_place_id"
   end
 
+  add_foreign_key "invitations", "groups"
+  add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "memberships", "groups"
   add_foreign_key "memberships", "users"
   add_foreign_key "places", "groups"

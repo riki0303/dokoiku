@@ -31,6 +31,12 @@ RSpec.describe "Navbar", type: :system do
       expect(page).to have_css("h1", text: "アカウント設定")
     end
 
+    it "ユーザー名 →「メンバーを招待」で招待リンクの発行画面へ移動できること" do
+      open_user_menu
+      within("nav.navbar") { click_link "メンバーを招待" }
+      expect(page).to have_current_path(new_invitation_path)
+    end
+
     it "ユーザー名 →「ログアウト」でログアウトでき、ログイン画面に戻ること", :aggregate_failures do
       open_user_menu
       within("nav.navbar") { click_button "ログアウト" }

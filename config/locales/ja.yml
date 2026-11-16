@@ -4,6 +4,7 @@ ja:
       user: ユーザー
       place: 場所
       visit: 訪問記録
+      invitation: 招待
     attributes:
       user:
         name: 名前
@@ -24,6 +25,8 @@ ja:
         place: 場所
         visited_on: 訪問日
         want_again: また行きたいか
+      invitation:
+        expires_at: 有効期限
   devise:
     registrations:
       edit:
