@@ -17,4 +17,17 @@ RSpec.describe Group, type: :model do
       expect(user.reload.groups).not_to include(group)
     end
   end
+
+  describe "#other_members?" do
+    let(:user) { create(:user) }
+
+    it "自分だけのグループなら false であること" do
+      expect(user.group.other_members?(user)).to be(false)
+    end
+
+    it "自分以外のメンバーがいれば true であること" do
+      create(:membership, group: user.group)
+      expect(user.group.other_members?(user)).to be(true)
+    end
+  end
 end

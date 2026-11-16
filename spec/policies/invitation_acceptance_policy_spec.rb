@@ -7,11 +7,13 @@ RSpec.describe InvitationAcceptancePolicy do
     let(:user) { build(:user) }
 
     it { expect(policy.show?).to be(true) }
+    it { expect(policy.create?).to be(true) }
   end
 
   context "未ログインの場合" do
     let(:user) { nil }
 
     it { expect(policy.show?).to be(false) }
+    it { expect(policy.create?).to be(false) }
   end
 end
