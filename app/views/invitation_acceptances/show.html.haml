@@ -3,3 +3,5 @@
   .col-md-8.col-lg-6
     %h1.h3.mb-3 #{@invitation.inviter_name}さんのグループに参加しますか？
     %p 今のグループの場所（#{@places_count}件）は参加先へ移ります。
+    -# form で送るので CSRF トークンが付く。参加すると今のグループは削除されるため、開いただけでは参加させず POST にする
+    = button_to "参加する", invitation_acceptance_path(@invitation.token), method: :post, class: "btn btn-primary"
